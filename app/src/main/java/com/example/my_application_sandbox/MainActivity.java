@@ -10,7 +10,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends AppCompatActivity {
 
-    //commentaire qui commente
+    //comment that comment
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
