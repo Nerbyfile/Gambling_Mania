@@ -1,6 +1,8 @@
 package com.example.my_application_sandbox;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -22,5 +24,9 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+    }
+    public void enterRoulette(View view){
+        Intent intent = new Intent(this, Roulette_activity.class);
+        startActivity(intent);
     }
 }
