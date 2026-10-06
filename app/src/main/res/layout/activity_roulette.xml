@@ -1,19 +1,242 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Roulette_activity">
+    android:background="#0B3D0B"
+    android:gravity="center_horizontal"
+    android:orientation="horizontal"
+    android:padding="16dp">
 
-    <ImageView
-        android:id="@+id/imageView3"
+    <!-- ===== JETONS ===== -->
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="139dp"
-        android:layout_marginTop="200dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:srcCompat="@tools:sample/avatars" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+        android:layout_marginEnd="20dp"
+        android:layout_marginTop="8dp"
+        android:orientation="vertical">
+
+        <androidx.cardview.widget.CardView android:layout_width="40dp" android:layout_height="40dp" android:layout_marginBottom="12dp" app:cardBackgroundColor="#BDBDBD" app:cardCornerRadius="20dp" app:cardElevation="0dp">
+            <androidx.cardview.widget.CardView android:layout_width="22dp" android:layout_height="22dp" android:layout_gravity="center" app:cardBackgroundColor="#F2F2F2" app:cardCornerRadius="11dp" app:cardElevation="0dp" />
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView android:layout_width="40dp" android:layout_height="40dp" android:layout_marginBottom="12dp" app:cardBackgroundColor="#E5202A" app:cardCornerRadius="20dp" app:cardElevation="0dp">
+            <androidx.cardview.widget.CardView android:layout_width="22dp" android:layout_height="22dp" android:layout_gravity="center" app:cardBackgroundColor="#F2F2F2" app:cardCornerRadius="11dp" app:cardElevation="0dp" />
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView android:layout_width="40dp" android:layout_height="40dp" android:layout_marginBottom="12dp" app:cardBackgroundColor="#3F6FD1" app:cardCornerRadius="20dp" app:cardElevation="0dp">
+            <androidx.cardview.widget.CardView android:layout_width="22dp" android:layout_height="22dp" android:layout_gravity="center" app:cardBackgroundColor="#F2F2F2" app:cardCornerRadius="11dp" app:cardElevation="0dp" />
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView android:layout_width="40dp" android:layout_height="40dp" android:layout_marginBottom="12dp" app:cardBackgroundColor="#1FA32A" app:cardCornerRadius="20dp" app:cardElevation="0dp">
+            <androidx.cardview.widget.CardView android:layout_width="22dp" android:layout_height="22dp" android:layout_gravity="center" app:cardBackgroundColor="#F2F2F2" app:cardCornerRadius="11dp" app:cardElevation="0dp" />
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView android:layout_width="40dp" android:layout_height="40dp" android:layout_marginBottom="12dp" app:cardBackgroundColor="#111111" app:cardCornerRadius="20dp" app:cardElevation="0dp">
+            <androidx.cardview.widget.CardView android:layout_width="22dp" android:layout_height="22dp" android:layout_gravity="center" app:cardBackgroundColor="#F2F2F2" app:cardCornerRadius="11dp" app:cardElevation="0dp" />
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView android:layout_width="40dp" android:layout_height="40dp" android:layout_marginBottom="12dp" app:cardBackgroundColor="#5B2A86" app:cardCornerRadius="20dp" app:cardElevation="0dp">
+            <androidx.cardview.widget.CardView android:layout_width="22dp" android:layout_height="22dp" android:layout_gravity="center" app:cardBackgroundColor="#F2F2F2" app:cardCornerRadius="11dp" app:cardElevation="0dp" />
+        </androidx.cardview.widget.CardView>
+    </LinearLayout>
+
+    <!-- ===== TABLE ===== -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#E6E6E6"
+        android:orientation="horizontal"
+        android:padding="1dp">
+
+        <!-- Chances simples (colonne exterieure) -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <View android:layout_width="30dp" android:layout_height="29dp" />
+            <TextView android:id="@+id/bet_low" android:layout_width="30dp" android:layout_height="57dp" android:layout_margin="0.5dp" android:background="#0B3D0B" android:gravity="center" android:text="1-18" android:textColor="#FFFFFF" android:textSize="9sp" android:textStyle="bold" />
+            <TextView android:id="@+id/bet_even" android:layout_width="30dp" android:layout_height="57dp" android:layout_margin="0.5dp" android:background="#0B3D0B" android:gravity="center" android:text="PAIR" android:textColor="#FFFFFF" android:textSize="9sp" android:textStyle="bold" />
+            <TextView android:id="@+id/bet_red" android:layout_width="30dp" android:layout_height="57dp" android:layout_margin="0.5dp" android:background="#0B3D0B" android:gravity="center" android:text="◆" android:textColor="#FF2D2D" android:textSize="20sp" android:textStyle="bold" />
+            <TextView android:id="@+id/bet_black" android:layout_width="30dp" android:layout_height="57dp" android:layout_margin="0.5dp" android:background="#0B3D0B" android:gravity="center" android:text="◆" android:textColor="#000000" android:textSize="20sp" android:textStyle="bold" />
+            <TextView android:id="@+id/bet_odd" android:layout_width="30dp" android:layout_height="57dp" android:layout_margin="0.5dp" android:background="#0B3D0B" android:gravity="center" android:text="IMP." android:textColor="#FFFFFF" android:textSize="9sp" android:textStyle="bold" />
+            <TextView android:id="@+id/bet_high" android:layout_width="30dp" android:layout_height="57dp" android:layout_margin="0.5dp" android:background="#0B3D0B" android:gravity="center" android:text="19-36" android:textColor="#FFFFFF" android:textSize="9sp" android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Douzaines (collees aux numeros) -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <View android:layout_width="30dp" android:layout_height="29dp" />
+            <TextView android:id="@+id/bet_dozen1" android:layout_width="30dp" android:layout_height="115dp" android:layout_margin="0.5dp" android:background="#0B3D0B" android:gravity="center" android:text="1-12" android:textColor="#FFFFFF" android:textSize="9sp" android:textStyle="bold" />
+            <TextView android:id="@+id/bet_dozen2" android:layout_width="30dp" android:layout_height="115dp" android:layout_margin="0.5dp" android:background="#0B3D0B" android:gravity="center" android:text="13-24" android:textColor="#FFFFFF" android:textSize="9sp" android:textStyle="bold" />
+            <TextView android:id="@+id/bet_dozen3" android:layout_width="30dp" android:layout_height="115dp" android:layout_margin="0.5dp" android:background="#0B3D0B" android:gravity="center" android:text="25-36" android:textColor="#FFFFFF" android:textSize="9sp" android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Zero + numeros + colonnes + zones de paris a cheval / carres -->
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Zero -->
+                <TextView android:id="@+id/n0" android:layout_width="104dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#0F3A12" android:gravity="center" android:text="0" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+
+                <!-- Numeros 1 a 36 -->
+                <GridLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:columnCount="3"
+                    android:rowCount="12">
+
+                    <TextView android:id="@+id/n1" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#FF2D2D" android:gravity="center" android:text="1" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n2" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#0A0A0A" android:gravity="center" android:text="2" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n3" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#FF2D2D" android:gravity="center" android:text="3" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n4" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#0A0A0A" android:gravity="center" android:text="4" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n5" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#FF2D2D" android:gravity="center" android:text="5" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n6" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#0A0A0A" android:gravity="center" android:text="6" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n7" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#FF2D2D" android:gravity="center" android:text="7" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n8" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#0A0A0A" android:gravity="center" android:text="8" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n9" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#FF2D2D" android:gravity="center" android:text="9" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n10" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#0A0A0A" android:gravity="center" android:text="10" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n11" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#0A0A0A" android:gravity="center" android:text="11" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n12" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#FF2D2D" android:gravity="center" android:text="12" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n13" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#0A0A0A" android:gravity="center" android:text="13" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n14" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#FF2D2D" android:gravity="center" android:text="14" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n15" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#0A0A0A" android:gravity="center" android:text="15" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n16" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#FF2D2D" android:gravity="center" android:text="16" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n17" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#0A0A0A" android:gravity="center" android:text="17" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n18" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#FF2D2D" android:gravity="center" android:text="18" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n19" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#FF2D2D" android:gravity="center" android:text="19" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n20" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#0A0A0A" android:gravity="center" android:text="20" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n21" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#FF2D2D" android:gravity="center" android:text="21" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n22" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#0A0A0A" android:gravity="center" android:text="22" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n23" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#FF2D2D" android:gravity="center" android:text="23" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n24" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#0A0A0A" android:gravity="center" android:text="24" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n25" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#FF2D2D" android:gravity="center" android:text="25" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n26" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#0A0A0A" android:gravity="center" android:text="26" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n27" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#FF2D2D" android:gravity="center" android:text="27" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n28" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#0A0A0A" android:gravity="center" android:text="28" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n29" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#0A0A0A" android:gravity="center" android:text="29" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n30" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#FF2D2D" android:gravity="center" android:text="30" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n31" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#0A0A0A" android:gravity="center" android:text="31" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n32" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#FF2D2D" android:gravity="center" android:text="32" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n33" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#0A0A0A" android:gravity="center" android:text="33" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n34" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#FF2D2D" android:gravity="center" android:text="34" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n35" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#0A0A0A" android:gravity="center" android:text="35" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/n36" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#FF2D2D" android:gravity="center" android:text="36" android:textColor="#FFFFFF" android:textSize="11sp" android:textStyle="bold" />
+                </GridLayout>
+
+                <!-- Colonnes (2 pour 1) -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView android:id="@+id/bet_col1" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#0F3A12" android:gravity="center" android:text="2:1" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/bet_col2" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#0F3A12" android:gravity="center" android:text="2:1" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold" />
+                    <TextView android:id="@+id/bet_col3" android:layout_width="34dp" android:layout_height="28dp" android:layout_margin="0.5dp" android:background="#0F3A12" android:gravity="center" android:text="2:1" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ===== ZONES CLIQUABLES INVISIBLES =====
+                 Pour les voir : ajoute android:background="#55FFFF00" -->
+            <!-- 0 : demi-chevaux (0-1, 0-2, 0-3) -->
+            <View android:id="@+id/split_0_1" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="6.5dp" android:layout_marginTop="23dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_0_2" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="41.5dp" android:layout_marginTop="23dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_0_3" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="76.5dp" android:layout_marginTop="23dp" android:clickable="true" android:focusable="true" />
+            <!-- 0 : trios (0-1-2, 0-2-3) -->
+            <View android:id="@+id/trio_0_1_2" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="29dp" android:layout_marginTop="23dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/trio_0_2_3" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="64dp" android:layout_marginTop="23dp" android:clickable="true" android:focusable="true" />
+            <!-- A cheval horizontaux (entre 2 colonnes) -->
+            <View android:id="@+id/split_1_2" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="28dp" android:layout_marginTop="34.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_2_3" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="63dp" android:layout_marginTop="34.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_4_5" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="28dp" android:layout_marginTop="63.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_5_6" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="63dp" android:layout_marginTop="63.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_7_8" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="28dp" android:layout_marginTop="92.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_8_9" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="63dp" android:layout_marginTop="92.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_10_11" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="28dp" android:layout_marginTop="121.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_11_12" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="63dp" android:layout_marginTop="121.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_13_14" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="28dp" android:layout_marginTop="150.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_14_15" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="63dp" android:layout_marginTop="150.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_16_17" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="28dp" android:layout_marginTop="179.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_17_18" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="63dp" android:layout_marginTop="179.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_19_20" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="28dp" android:layout_marginTop="208.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_20_21" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="63dp" android:layout_marginTop="208.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_22_23" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="28dp" android:layout_marginTop="237.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_23_24" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="63dp" android:layout_marginTop="237.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_25_26" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="28dp" android:layout_marginTop="266.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_26_27" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="63dp" android:layout_marginTop="266.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_28_29" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="28dp" android:layout_marginTop="295.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_29_30" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="63dp" android:layout_marginTop="295.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_31_32" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="28dp" android:layout_marginTop="324.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_32_33" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="63dp" android:layout_marginTop="324.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_34_35" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="28dp" android:layout_marginTop="353.5dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_35_36" android:layout_width="14dp" android:layout_height="18dp" android:layout_marginStart="63dp" android:layout_marginTop="353.5dp" android:clickable="true" android:focusable="true" />
+            <!-- A cheval verticaux (entre 2 lignes) -->
+            <View android:id="@+id/split_1_4" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="6.5dp" android:layout_marginTop="52dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_2_5" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="41.5dp" android:layout_marginTop="52dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_3_6" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="76.5dp" android:layout_marginTop="52dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_4_7" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="6.5dp" android:layout_marginTop="81dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_5_8" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="41.5dp" android:layout_marginTop="81dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_6_9" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="76.5dp" android:layout_marginTop="81dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_7_10" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="6.5dp" android:layout_marginTop="110dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_8_11" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="41.5dp" android:layout_marginTop="110dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_9_12" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="76.5dp" android:layout_marginTop="110dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_10_13" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="6.5dp" android:layout_marginTop="139dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_11_14" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="41.5dp" android:layout_marginTop="139dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_12_15" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="76.5dp" android:layout_marginTop="139dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_13_16" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="6.5dp" android:layout_marginTop="168dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_14_17" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="41.5dp" android:layout_marginTop="168dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_15_18" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="76.5dp" android:layout_marginTop="168dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_16_19" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="6.5dp" android:layout_marginTop="197dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_17_20" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="41.5dp" android:layout_marginTop="197dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_18_21" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="76.5dp" android:layout_marginTop="197dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_19_22" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="6.5dp" android:layout_marginTop="226dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_20_23" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="41.5dp" android:layout_marginTop="226dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_21_24" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="76.5dp" android:layout_marginTop="226dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_22_25" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="6.5dp" android:layout_marginTop="255dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_23_26" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="41.5dp" android:layout_marginTop="255dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_24_27" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="76.5dp" android:layout_marginTop="255dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_25_28" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="6.5dp" android:layout_marginTop="284dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_26_29" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="41.5dp" android:layout_marginTop="284dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_27_30" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="76.5dp" android:layout_marginTop="284dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_28_31" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="6.5dp" android:layout_marginTop="313dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_29_32" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="41.5dp" android:layout_marginTop="313dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_30_33" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="76.5dp" android:layout_marginTop="313dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_31_34" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="6.5dp" android:layout_marginTop="342dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_32_35" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="41.5dp" android:layout_marginTop="342dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/split_33_36" android:layout_width="22dp" android:layout_height="12dp" android:layout_marginStart="76.5dp" android:layout_marginTop="342dp" android:clickable="true" android:focusable="true" />
+            <!-- Carres (4 numeros) -->
+            <View android:id="@+id/corner_1_2_4_5" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="29dp" android:layout_marginTop="52dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/corner_2_3_5_6" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="64dp" android:layout_marginTop="52dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/corner_4_5_7_8" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="29dp" android:layout_marginTop="81dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/corner_5_6_8_9" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="64dp" android:layout_marginTop="81dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/corner_7_8_10_11" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="29dp" android:layout_marginTop="110dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/corner_8_9_11_12" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="64dp" android:layout_marginTop="110dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/corner_10_11_13_14" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="29dp" android:layout_marginTop="139dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/corner_11_12_14_15" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="64dp" android:layout_marginTop="139dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/corner_13_14_16_17" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="29dp" android:layout_marginTop="168dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/corner_14_15_17_18" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="64dp" android:layout_marginTop="168dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/corner_16_17_19_20" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="29dp" android:layout_marginTop="197dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/corner_17_18_20_21" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="64dp" android:layout_marginTop="197dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/corner_19_20_22_23" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="29dp" android:layout_marginTop="226dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/corner_20_21_23_24" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="64dp" android:layout_marginTop="226dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/corner_22_23_25_26" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="29dp" android:layout_marginTop="255dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/corner_23_24_26_27" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="64dp" android:layout_marginTop="255dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/corner_25_26_28_29" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="29dp" android:layout_marginTop="284dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/corner_26_27_29_30" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="64dp" android:layout_marginTop="284dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/corner_28_29_31_32" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="29dp" android:layout_marginTop="313dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/corner_29_30_32_33" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="64dp" android:layout_marginTop="313dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/corner_31_32_34_35" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="29dp" android:layout_marginTop="342dp" android:clickable="true" android:focusable="true" />
+            <View android:id="@+id/corner_32_33_35_36" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginStart="64dp" android:layout_marginTop="342dp" android:clickable="true" android:focusable="true" />
+        </FrameLayout>
+    </LinearLayout>
+</LinearLayout>
