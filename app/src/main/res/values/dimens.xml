@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- hauteur d'une ligne de la table : un seul endroit a regler -->
+    <dimen name="cell_h">40dp</dimen>
+</resources>

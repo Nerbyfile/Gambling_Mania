@@ -35,7 +35,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:onClick="enterRoulette"
-            android:text="Roulette" />
+            android:text="@string/jeu_un" />
 
         <Space
             android:layout_width="match_parent"
@@ -45,7 +45,7 @@
             android:id="@+id/start_parametre"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Parametres" />
+            android:text="@string/parameter_window" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
