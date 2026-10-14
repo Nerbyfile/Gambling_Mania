@@ -32,6 +32,9 @@ public class Roulette_activity extends AppCompatActivity {
     private Bet current = null;                          // bet being held by finger
     private float edge_w_ratio = 0.05f ;
 
+    private View jetonSelectionne = null;
+    private int mise = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,6 +52,16 @@ public class Roulette_activity extends AppCompatActivity {
         initViews();                                                                                // Get all cells from grid
         GridLayout grid = findViewById(R.id.table_grid);
         grid.post(() -> setupTouch(grid));
+
+        // Jetons
+        int[] ids = { R.id.chip2, R.id.chip5, R.id.chip10,
+                R.id.chip25, R.id.chip50, R.id.chip100 };
+        int[] valeurs = { 2, 5, 10, 25, 50, 100 };
+
+        for (int i = 0; i < ids.length; i++) {
+            int valeur = valeurs[i];
+            findViewById(ids[i]).setOnClickListener(v -> selectionnerJeton(v, valeur));
+        }
     }
 
     private void initViews() {
@@ -144,5 +157,24 @@ public class Roulette_activity extends AppCompatActivity {
             case DOUZAINE:       /* bet.zone : DOUZAINE_1..3                */ break;
             case COLONNE:        /* bet.zone : COLONNE_1..3                 */ break;
         }
+    }
+
+    private void selectionnerJeton(View jeton, int valeur) {
+        // remet l'ancien jeton à sa taille normale
+        if (jetonSelectionne != null) {
+            jetonSelectionne.animate().scaleX(1f).scaleY(1f).setDuration(150).start();
+        }
+
+        // un 2e clic sur le même jeton le désélectionne
+        if (jetonSelectionne == jeton) {
+            jetonSelectionne = null;
+            mise = 0;
+            return;
+        }
+
+        // agrandit le jeton cliqué
+        jeton.animate().scaleX(1.2f).scaleY(1.2f).setDuration(150).start();
+        jetonSelectionne = jeton;
+        mise = valeur;
     }
 }
