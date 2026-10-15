@@ -124,10 +124,10 @@ public class RouletteTouchHelper {
 
     /** --> End of type definition <-- **/
 
-    private final float originX;
-    private final float originY;
-    private final float cellH;  // hauteur de la ligne du 0 (px)
-    private final float cellW;   // largeur d'une colonne (px)
+    private float originX;
+    private float originY;
+    private float cellH;  // hauteur de la ligne du 0 (px)
+    private float cellW;   // largeur d'une colonne (px)
     private final float edge;   // part de la case réservée aux bords (0.25 - 0.35)
 
     private static final Zone[] SIMPLES   = {Zone.MANQUE, Zone.PAIR, Zone.ROUGE,
@@ -144,6 +144,13 @@ public class RouletteTouchHelper {
         this.edge    = edge;
     }
 
+    public void updateMetrics(float originX, float originY, float cellH, float cellW) {
+        this.originX = originX;
+        this.originY = originY;
+        this.cellH = cellH;
+        this.cellW = cellW;
+    }
+
     /** Translate x/y position into one or more cell */
     public Bet resolve(float x, float y) {
         x -= originX;
@@ -151,14 +158,14 @@ public class RouletteTouchHelper {
         float originX_numbers = 2*cellW;
 
 
-        if (x < 0 || x >= cellW * 5 || y < 0 || y >= cellH * 14) return null;                       //Outside table
-        if ((y < cellH && x < 2 * cellW) || (y > 13 * cellH && x < 2 * cellW)) return null;         //White zone
-
+        if (x < 0 || x >= cellW * 5 || y < 0 || y > cellH * 14) return null;                       //Outside table
         int col  = (int) (x / cellW);                                                               //Witch column is selected
         float fx = x / cellW - col;                                                                 //Where in the column
 
         int row  = (int) (y / cellH);                                                               //Witch row is selected
-        float fy = y / cellW - row;                                                                 //Where in the row
+        float fy = y / cellH - row;                                                                 //Where in the row
+
+        if ((row == 0 && col < 2) || (row == 13 && col < 2)) return null;                           //White zone
 
         // --- 0. Bande "ligne" : de part et d'autre de la frontière douzaines / numéros
         if (Math.abs(x - originX_numbers) < edge * cellW && row <= 12) {
@@ -168,23 +175,26 @@ public class RouletteTouchHelper {
 
         // --- 1. Cases spéciales à gauche : la case entière = la zone, pas de bords
         if (x < cellW) {
-            return Bet.ofZone(SIMPLES[(row - 1)]);                                              // 1 cell = 2 row merged
+            if (row < 1 || row > 12) return null;
+            return Bet.ofZone(SIMPLES[(row - 1) / 2]);                                              // 1 cell = 2 row merged
         }
         if (x < originX_numbers) {
-            return Bet.ofZone(DOUZAINES[(row - 1) / 3]);                                            // 1 cell = 4 row merged
+            if (row < 1 || row > 12) return null;
+            return Bet.ofZone(DOUZAINES[(row - 1) / 4]);                                            // 1 cell = 4 row merged
         }
 
         // --- 2. Zone des colonnes
-        if (row == 13) return Bet.ofZone(COLONNES[col]);  // colonnes 2:1
+        if (row == 13) return Bet.ofZone(COLONNES[col - 2]);  // colonnes 2:1
 
         // --- 3. Zone des numéros
         row = row - 1;                                // -1 = zéro, 0..11 = numbers
+        col = col - 2;                                // 0..2 = colonnes de numéros
 
         // Près d'un bord : on ajoute la case voisine
         Set<Integer> cols = new LinkedHashSet<>();
         cols.add(col);
-        if (fx < edge && col > 0) cols.add(col - 1);                                                // right cell
-        if (fx > 1 - edge && col < 2) cols.add(col + 1);                                            // left cell
+        if (fx < edge && col > 0) cols.add(col - 1);                                                // left cell
+        if (fx > 1 - edge && col < 2) cols.add(col + 1);                                            // right cell
 
         Set<Integer> rows = new LinkedHashSet<>();
         rows.add(row);
@@ -197,6 +207,7 @@ public class RouletteTouchHelper {
                 numbers.add(r < 0 ? 0 : r * 3 + c +1);                                             // if -1 -> 0 else it count the correct number
             }
         }
+
         return Bet.ofNumbers(numbers);
 
 

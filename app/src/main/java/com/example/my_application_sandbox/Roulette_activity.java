@@ -30,7 +30,7 @@ public class Roulette_activity extends AppCompatActivity {
     private final Map<Zone, TextView> zoneViews = new EnumMap<>(Zone.class);
 
     private Bet current = null;                          // bet being held by finger
-    private float edge_w_ratio = 0.05f ;
+    private float edge_w_ratio = 0.30f ;
 
     private View jetonSelectionne = null;
     private int mise = 0;
@@ -98,14 +98,17 @@ public class Roulette_activity extends AppCompatActivity {
     @SuppressLint("ClickableViewAccessibility")
     private void setupTouch(GridLayout grid){
 
-        float cell_w = cells[2].getLeft() - cells[1].getLeft();
-        float cell_h = cells[4].getTop()  - cells[1].getTop();
-        float x_origin = cells[1].getLeft() - 2 * cell_w;
-        float y_origin = cells[0].getTop();
-
-
-        RouletteTouchHelper helper = new RouletteTouchHelper(x_origin,y_origin,cell_w,cell_h,edge_w_ratio);
+        RouletteTouchHelper helper = new RouletteTouchHelper(0,0,1,1,edge_w_ratio);
         grid.setOnTouchListener((v, event) -> {
+            
+            // Recalcul de la taille des cellules en temps réel (immunisé contre les redimensionnements de l'UI dus aux insets)
+            float cell_w = (cells[3].getLeft() - cells[1].getLeft()) / 2f;
+            float cell_h = (cells[34].getTop() - cells[1].getTop()) / 11f;
+            float x_origin = cells[1].getLeft() - 2f * cell_w;
+            float y_origin = cells[1].getTop() - cell_h;
+            
+            helper.updateMetrics(x_origin, y_origin, cell_h, cell_w);
+
             switch (event.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:                                                       //Finger pressed (unused but avoid warnings)
                 case MotionEvent.ACTION_MOVE:                                                       //Finger moving
