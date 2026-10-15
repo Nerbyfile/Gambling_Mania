@@ -45,7 +45,8 @@ public class Roulette_activity extends AppCompatActivity {
         setContentView(R.layout.activity_roulette);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            int padding = (int) (10 * getResources().getDisplayMetrics().density);
+            v.setPadding(systemBars.left + padding, systemBars.top + padding, systemBars.right + padding, systemBars.bottom + padding);
             return insets;
         });
 
