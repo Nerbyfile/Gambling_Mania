@@ -1,6 +1,7 @@
 package com.example.my_application_sandbox;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.HapticFeedbackConstants;
@@ -180,5 +181,11 @@ public class Roulette_activity extends AppCompatActivity {
         jeton.animate().scaleX(1.2f).scaleY(1.2f).setDuration(150).start();
         jetonSelectionne = jeton;
         mise = valeur;
+    }
+
+    public void start_roulette(View view){
+
+        Intent intent = new Intent(this, Roulette_rotate_activity.class);
+        startActivity(intent);
     }
 }

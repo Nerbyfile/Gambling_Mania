@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0B3D0B"
+    android:padding="24dp">
+
+    <!-- Roue + balle : carré, centré -->
+    <FrameLayout
+        android:id="@+id/wheel_container"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/btn_spin">
+
+        <!-- La roue (rotation autour de son centre) -->
+        <com.example.my_application_sandbox.RouletteWheelView
+            android:id="@+id/wheel"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <!-- Orbite de la balle : même taille que la roue.
+             On tourne CE conteneur pour faire orbiter la balle. -->
+        <FrameLayout
+            android:id="@+id/ball_orbit"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/ball"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_gravity="top|center_horizontal"
+                android:layout_marginTop="10dp"
+                app:cardBackgroundColor="#F5F5F5"
+                app:cardCornerRadius="7dp"
+                app:cardElevation="4dp" />
+        </FrameLayout>
+    </FrameLayout>
+
+    <Button
+        android:id="@+id/btn_spin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Lancer"
+        app:layout_constraintTop_toBottomOf="@+id/wheel_container"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
