@@ -38,9 +38,14 @@ public class Roulette_rotate_activity extends AppCompatActivity {
         Button btnSpin = findViewById(R.id.btn_spin);
 
         btnSpin.setOnClickListener(v -> {
+            Roulette_player player = Roulette_player.getInstance();
+            if (player.getBets().isEmpty()) {
+                Toast.makeText(v.getContext(), "Aucun pari en cours", Toast.LENGTH_SHORT).show();
+                return;
+            }
             btnSpin.setEnabled(false);
 
-            int winning = new java.util.Random().nextInt(37);
+            int winning = new java.util.Random().nextInt(37);     // ! Non sécurisé & anticipable random extern nécéssaire
             float a = RouletteWheelView.angleOfNumber(winning); // 0..360
 
             float dp = getResources().getDisplayMetrics().density;
@@ -72,12 +77,18 @@ public class Roulette_rotate_activity extends AppCompatActivity {
             set.addListener(new AnimatorListenerAdapter() {
                 @Override public void onAnimationEnd(Animator animation) {
                     btnSpin.setEnabled(true);
-                    Toast.makeText(btnSpin.getContext(), "Numéro : " + winning, Toast.LENGTH_SHORT).show();
+                    int payout = player.settle(winning);   // crédite les gains et vide les paris
+                    String msg = "Numéro : " + winning
+                            + (payout > 0 ? " — tu récupères " + payout : " — perdu")
+                            + "\nSolde : " + player.getBank();
+                    Toast.makeText(btnSpin.getContext(), msg, Toast.LENGTH_LONG).show();
                 }
             });
             set.start();
         });
     }
+
+
 
 
 

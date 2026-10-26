@@ -59,6 +59,7 @@ public class RouletteTouchHelper {
         public final Kind kind;
         public final Set<Integer> numbers;  // numéros couverts (pour la surbrillance et les gains)
         public final Zone zone;             // null pour plein / cheval / trio / carré
+        public int Mise;
 
 
         private Bet(Kind kind, Set<Integer> numbers, Zone zone) {

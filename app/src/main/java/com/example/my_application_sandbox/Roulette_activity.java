@@ -3,12 +3,12 @@ package com.example.my_application_sandbox;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.GridLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -22,26 +22,25 @@ import com.example.my_application_sandbox.RouletteTouchHelper.Zone;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 public class Roulette_activity extends AppCompatActivity {
-
 
     private final TextView[] cells = new TextView[37];   // list containing all cell
     private final Map<Zone, TextView> zoneViews = new EnumMap<>(Zone.class);
 
     private Bet current = null;                          // bet being held by finger
-    private float edge_w_ratio = 0.30f ;
+    private float edge_w_ratio = 0.30f;
+    private Roulette_player player;
 
     private View jetonSelectionne = null;
     private int mise = 0;
+
+    private TextView txtBank, txtTotalBet, txtChip;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-
-
 
         setContentView(R.layout.activity_roulette);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -55,6 +54,8 @@ public class Roulette_activity extends AppCompatActivity {
         GridLayout grid = findViewById(R.id.table_grid);
         grid.post(() -> setupTouch(grid));
 
+        player = Roulette_player.getInstance();   // joueur créé dans MainActivity.enterRoulette()
+
         // Jetons
         int[] ids = { R.id.chip2, R.id.chip5, R.id.chip10,
                 R.id.chip25, R.id.chip50, R.id.chip100 };
@@ -64,9 +65,22 @@ public class Roulette_activity extends AppCompatActivity {
             int valeur = valeurs[i];
             findViewById(ids[i]).setOnClickListener(v -> selectionnerJeton(v, valeur));
         }
+
+        refreshUi();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // au retour de la roue, le solde a changé
+        if (player != null) refreshUi();
     }
 
     private void initViews() {
+        txtBank     = findViewById(R.id.txt_bank);
+        txtTotalBet = findViewById(R.id.txt_total_bet);
+        txtChip     = findViewById(R.id.txt_chip);
+
         cells[0] = findViewById(R.id.leZ);
         for (int i = 1; i <= 36; i++) {
             int id = getResources().getIdentifier("n" + i, "id", getPackageName());
@@ -85,30 +99,20 @@ public class Roulette_activity extends AppCompatActivity {
         zoneViews.put(Zone.COLONNE_1,  findViewById(R.id.col1));
         zoneViews.put(Zone.COLONNE_2,  findViewById(R.id.col2));
         zoneViews.put(Zone.COLONNE_3,  findViewById(R.id.col3));
-
-        /*
-        //debug
-        for (int i = 0; i < cells.length; i++) {
-            if (cells[i] == null) Log.e("ROULETTE", "cells[" + i + "] est null");
-        }
-        for (Zone z : Zone.values()) {
-            if (zoneViews.get(z) == null) Log.e("ROULETTE", "zone " + z + " : vue introuvable");
-        }
-
-         */
     }
-    @SuppressLint("ClickableViewAccessibility")
-    private void setupTouch(GridLayout grid){
 
-        RouletteTouchHelper helper = new RouletteTouchHelper(0,0,1,1,edge_w_ratio);
+    @SuppressLint("ClickableViewAccessibility")
+    private void setupTouch(GridLayout grid) {
+
+        RouletteTouchHelper helper = new RouletteTouchHelper(0, 0, 1, 1, edge_w_ratio);
         grid.setOnTouchListener((v, event) -> {
-            
+
             // Recalcul de la taille des cellules en temps réel (immunisé contre les redimensionnements de l'UI dus aux insets)
             float cell_w = (cells[3].getLeft() - cells[1].getLeft()) / 2f;
             float cell_h = (cells[34].getTop() - cells[1].getTop()) / 11f;
             float x_origin = cells[1].getLeft() - 2f * cell_w;
             float y_origin = cells[1].getTop() - cell_h;
-            
+
             helper.updateMetrics(x_origin, y_origin, cell_h, cell_w);
 
             switch (event.getActionMasked()) {
@@ -126,6 +130,8 @@ public class Roulette_activity extends AppCompatActivity {
                     if (current != null) placeBet(current);  // le doigt se lève : on valide
                     resetSelection();
                     v.performClick();
+                    for (TextView c : cells) c.setAlpha(1f);
+                    for (TextView z : zoneViews.values()) z.setAlpha(1f);
                     return true;
 
                 case MotionEvent.ACTION_CANCEL:                                                     //Action cancelled by android
@@ -135,6 +141,7 @@ public class Roulette_activity extends AppCompatActivity {
             return false;
         });
     }
+
     private void highlight(Bet bet) {
         for (TextView c : cells) c.setAlpha(0.2f);
         for (TextView z : zoneViews.values()) z.setAlpha(0.2f);
@@ -142,26 +149,35 @@ public class Roulette_activity extends AppCompatActivity {
 
         for (int n : bet.numbers) cells[n].setAlpha(1f);
         if (bet.zone != null) zoneViews.get(bet.zone).setAlpha(1f);
-
-
     }
+
     private void resetSelection() {
         current = null;
         highlight(null);
     }
 
+    /** Enregistre le pari tenu par le doigt avec le jeton sélectionné. */
     private void placeBet(Bet bet) {
-        switch (bet.kind) {
-            case PLEIN:          /* bet.numbers : 1 numéro                  */ break;
-            case CHEVAL:         /* bet.numbers : 2 numéros                 */ break;
-            case TRIO:           /* bet.numbers : 0-1-2 ou 0-2-3            */ break;
-            case LIGNE:          /* bet.numbers : 3 numéros d'une ligne     */ break;
-            case CARRE:          /* bet.numbers : 4 numéros (dont 0-1-2-3)  */ break;
-            case SIXAIN:         /* bet.numbers : 6 numéros, 2 lignes       */ break;
-            case CHANCE_SIMPLE:  /* bet.zone : PAIR, ROUGE, ...             */ break;
-            case DOUZAINE:       /* bet.zone : DOUZAINE_1..3                */ break;
-            case COLONNE:        /* bet.zone : COLONNE_1..3                 */ break;
+        if (mise == 0) {
+            toast("Sélectionne d'abord un jeton");
+            return;
         }
+        if (!player.placeBet(bet, mise)) {
+            toast("Solde insuffisant");
+            return;
+        }
+        refreshUi();
+    }
+
+    // ---- Boutons (android:onClick) ----
+    public void undo_bet(View view) {
+        player.removeBet();
+        refreshUi();
+    }
+
+    public void clear_bets(View view) {
+        player.removeAllBets();
+        refreshUi();
     }
 
     private void selectionnerJeton(View jeton, int valeur) {
@@ -174,6 +190,7 @@ public class Roulette_activity extends AppCompatActivity {
         if (jetonSelectionne == jeton) {
             jetonSelectionne = null;
             mise = 0;
+            refreshUi();
             return;
         }
 
@@ -181,10 +198,24 @@ public class Roulette_activity extends AppCompatActivity {
         jeton.animate().scaleX(1.2f).scaleY(1.2f).setDuration(150).start();
         jetonSelectionne = jeton;
         mise = valeur;
+        refreshUi();
     }
 
-    public void start_roulette(View view){
+    private void refreshUi() {
+        txtBank.setText("Solde : " + player.getBank());
+        txtTotalBet.setText("Mise totale : " + player.getTotalStake());
+        txtChip.setText(mise > 0 ? "Jeton : " + mise : "Jeton : aucun");
+    }
 
+    private void toast(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+    }
+
+    public void start_roulette(View view) {
+        if (player.getBets().isEmpty()) {
+            toast("Place au moins un pari");
+            return;
+        }
         Intent intent = new Intent(this, Roulette_rotate_activity.class);
         startActivity(intent);
     }

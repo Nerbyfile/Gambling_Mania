@@ -26,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
     public void enterRoulette(View view){
+        Roulette_player.newSession(1000);   // nouveau joueur avec 1000 de solde
         Intent intent = new Intent(this, Roulette_activity.class);
         startActivity(intent);
     }
