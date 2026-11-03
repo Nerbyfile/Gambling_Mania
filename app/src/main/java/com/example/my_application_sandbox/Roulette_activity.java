@@ -18,6 +18,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.my_application_sandbox.RouletteTouchHelper.Bet;
 import com.example.my_application_sandbox.RouletteTouchHelper.Zone;
+import com.example.my_application_sandbox.RouletteTouchHelper.Kind;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -36,6 +37,7 @@ public class Roulette_activity extends AppCompatActivity {
     private int mise = 0;
 
     private TextView txtBank, txtTotalBet, txtChip;
+    private ChipOverlayView chipOverlay;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,6 +101,19 @@ public class Roulette_activity extends AppCompatActivity {
         zoneViews.put(Zone.COLONNE_1,  findViewById(R.id.col1));
         zoneViews.put(Zone.COLONNE_2,  findViewById(R.id.col2));
         zoneViews.put(Zone.COLONNE_3,  findViewById(R.id.col3));
+
+        chipOverlay = findViewById(R.id.chip_overlay);
+        chipOverlay.setAnchorProvider(new ChipOverlayView.AnchorProvider() {
+            @Override
+            public void anchorOf(Bet bet, float[] out) {
+                computeAnchor(bet, out);
+            }
+
+            @Override
+            public float cellSize() {
+                return Math.min(cells[1].getWidth(), cells[1].getHeight());
+            }
+        });
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -205,6 +220,7 @@ public class Roulette_activity extends AppCompatActivity {
         txtBank.setText("Solde : " + player.getBank());
         txtTotalBet.setText("Mise totale : " + player.getTotalStake());
         txtChip.setText(mise > 0 ? "Jeton : " + mise : "Jeton : aucun");
+        chipOverlay.setBets(player.getBets());chipOverlay.setBets(player.getBets());
     }
 
     private void toast(String msg) {
@@ -218,5 +234,62 @@ public class Roulette_activity extends AppCompatActivity {
         }
         Intent intent = new Intent(this, Roulette_rotate_activity.class);
         startActivity(intent);
+    }
+    /** Point d'ancrage du jeton d'un pari, en coordonnées de la grille. */
+    private void computeAnchor(Bet bet, float[] out) {
+        // Chances simples, douzaines, colonnes : centre de la zone
+        if (bet.zone != null) {
+            View z = zoneViews.get(bet.zone);
+            out[0] = (z.getLeft() + z.getRight()) / 2f;
+            out[1] = (z.getTop() + z.getBottom()) / 2f;
+            return;
+        }
+
+        boolean hasZero = bet.numbers.contains(0);
+        boolean line = bet.kind == Kind.LIGNE || bet.kind == Kind.SIXAIN
+                || (bet.kind == Kind.CARRE && hasZero);
+
+        // Ligne, sixain, 0-1-2-3 : sur la frontière gauche des numéros, entre les lignes concernées
+        if (line) {
+            boolean[] rowUsed = new boolean[13];   // 0 = ligne du zéro, 1..12 = lignes de numéros
+            for (int n : bet.numbers) rowUsed[n == 0 ? 0 : (n - 1) / 3 + 1] = true;
+            float sumY = 0;
+            int count = 0;
+            for (int r = 0; r < 13; r++) {
+                if (!rowUsed[r]) continue;
+                TextView ref = (r == 0) ? cells[0] : cells[(r - 1) * 3 + 1];
+                sumY += (ref.getTop() + ref.getBottom()) / 2f;
+                count++;
+            }
+            out[0] = cells[1].getLeft();
+            out[1] = sumY / count;
+            return;
+        }
+
+        // Cheval ou trio avec le 0 : sur le bord haut de la première ligne
+        if (hasZero && bet.numbers.size() > 1) {
+            float sumX = 0;
+            int count = 0;
+            for (int n : bet.numbers) {
+                if (n == 0) continue;
+                sumX += (cells[n].getLeft() + cells[n].getRight()) / 2f;
+                count++;
+            }
+            out[0] = sumX / count;
+            out[1] = cells[1].getTop();
+            return;
+        }
+
+        // Plein, cheval, carré : moyenne des centres des cases couvertes
+        float sumX = 0, sumY = 0;
+        int count = 0;
+        for (int n : bet.numbers) {
+            TextView c = cells[n];
+            sumX += (c.getLeft() + c.getRight()) / 2f;
+            sumY += (c.getTop() + c.getBottom()) / 2f;
+            count++;
+        }
+        out[0] = sumX / count;
+        out[1] = sumY / count;
     }
 }

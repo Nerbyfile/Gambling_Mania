@@ -1,5 +1,6 @@
 package com.example.my_application_sandbox;
 
+import com.example.my_application_sandbox.Player;
 import com.example.my_application_sandbox.RouletteTouchHelper.Bet;
 import com.example.my_application_sandbox.RouletteTouchHelper.Kind;
 
@@ -15,22 +16,22 @@ public class Roulette_player {
     private static Roulette_player instance;
 
     /** Crée un nouveau joueur (à appeler à l'entrée dans le jeu). */
-    public static Roulette_player newSession(int bank) {
-        instance = new Roulette_player(bank);
+    public static Roulette_player newSession(Player player) {
+        Player.setCurrent(player);
+        instance = new Roulette_player(player);
         return instance;
     }
 
     /** Récupère le joueur courant (en crée un par sécurité s'il n'existe pas). */
     public static Roulette_player getInstance() {
-        if (instance == null) instance = new Roulette_player(1000);
+        Player p = Player.current();
+        if (instance == null || instance.player != p) instance = new Roulette_player(p);
         return instance;
     }
 
     // ---- Données du joueur ----
-    String user_name;   // Player name
-    int id;             // Player id
-    int bank;           // Player total money
-    private final List<Bet> bets = new ArrayList<>();          // paris en cours (mises fusionnées)
+    private final Player player;                                 // joueur général (id, nom, banque)
+    private final List<Bet> bets = new ArrayList<>();            // paris en cours (mises fusionnées)
     private final Deque<Placement> history = new ArrayDeque<>(); // pour annuler le dernier jeton posé
 
     private static final class Placement {
@@ -38,15 +39,13 @@ public class Roulette_player {
         final int amount;
         Placement(Bet bet, int amount) { this.bet = bet; this.amount = amount; }
     }
-
-    public Roulette_player(int bank) {
-        this.bank = bank;
-        this.user_name = "default";
-        this.id = 0;
+    public Roulette_player(Player player) {
+        this.player = player;
     }
 
     // ---- Accesseurs ----
-    public int getBank() { return bank; }
+    public Player getPlayer() { return player; }
+    public int getBank() { return player.getBank(); }
     public List<Bet> getBets() { return Collections.unmodifiableList(bets); }
 
     public int getTotalStake() {
@@ -55,11 +54,12 @@ public class Roulette_player {
         return total;
     }
 
+
     // ---- Paris ----
 
     /** Pose "amount" sur ce pari. Retourne false si la mise est invalide ou le solde insuffisant. */
     public boolean placeBet(Bet bet, int amount) {
-        if (amount <= 0 || amount > bank) return false;
+        if (!player.debit(amount)) return false;
 
         Bet existing = null;
         for (Bet b : bets) {
@@ -73,7 +73,6 @@ public class Roulette_player {
             bets.add(bet);
             history.push(new Placement(bet, amount));
         }
-        bank -= amount;
         return true;
     }
 
@@ -82,13 +81,13 @@ public class Roulette_player {
         Placement last = history.poll();
         if (last == null) return;
         last.bet.Mise -= last.amount;
-        bank += last.amount;
+        player.credit(last.amount);
         if (last.bet.Mise <= 0) bets.remove(last.bet);
     }
 
     /** Retire tous les paris et rembourse. */
     public void removeAllBets() {
-        bank += getTotalStake();
+        player.credit(getTotalStake());
         bets.clear();
         history.clear();
     }
@@ -125,7 +124,7 @@ public class Roulette_player {
     /** Règle le tour : crédite les gains, vide les paris. Retourne la somme créditée. */
     public int settle(int result) {
         int payout = calcGain(result);
-        bank += payout;
+        player.credit(payout);
         bets.clear();
         history.clear();
         return payout;
