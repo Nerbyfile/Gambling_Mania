@@ -292,4 +292,10 @@ public class Roulette_activity extends AppCompatActivity {
         out[0] = sumX / count;
         out[1] = sumY / count;
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (isFinishing()) player.removeAllBets();
+    }
 }

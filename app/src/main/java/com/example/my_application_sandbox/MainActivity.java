@@ -17,6 +17,17 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (!Player.hasCurrent()) {
+            Player saved = PlayerStore.load(this);
+            if (saved == null) {                       // première ouverture : pas de compte
+                startActivity(new Intent(this, Account_activity.class));
+                finish();
+                return;
+            }
+            Player.setCurrent(saved);                  // compte existant : on le recharge
+        }
+
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -26,8 +37,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
     public void enterRoulette(View view){
-        Player player = Player.create("Invité", 1000);   // nouveau joueur avec 1000 de solde
-        Roulette_player.newSession(player);
+        Roulette_player.newSession(Player.current());
         Intent intent = new Intent(this, Roulette_activity.class);
         startActivity(intent);
     }

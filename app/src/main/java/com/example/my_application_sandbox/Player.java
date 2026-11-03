@@ -39,6 +39,11 @@ public class Player {
         return current;
     }
 
+    /** Vrai si un joueur courant est déjà défini en mémoire. */
+    public static boolean hasCurrent() {
+        return current != null;
+    }
+
     public static void setCurrent(Player player) {
         current = player;
     }
