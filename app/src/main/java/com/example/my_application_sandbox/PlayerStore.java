@@ -3,11 +3,11 @@ package com.example.my_application_sandbox;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-/** Sauvegarde locale du joueur. À remplacer par Room plus tard : seul ce fichier changera. */
+/** Cache local du joueur, pour démarrer sans attendre le réseau. */
 public final class PlayerStore {
 
     private static final String PREFS = "player_store";
-    private static final String K_ID = "id";
+    private static final String K_ID = "player_id";    // nouvelle clé : l'ancien id était un long
     private static final String K_NAME = "name";
     private static final String K_BANK = "bank";
     private static final String K_CREATED = "created_at";
@@ -21,9 +21,9 @@ public final class PlayerStore {
     /** Retourne le joueur enregistré, ou null si aucun compte n'existe (première ouverture). */
     public static Player load(Context ctx) {
         SharedPreferences sp = prefs(ctx);
-        if (!sp.contains(K_NAME)) return null;
+        if (!sp.contains(K_ID) || !sp.contains(K_NAME)) return null;
         Player p = new Player();
-        p.setId(sp.getLong(K_ID, 1L));
+        p.setId(sp.getString(K_ID, null));
         p.setName(sp.getString(K_NAME, "Joueur"));
         p.setBank(sp.getInt(K_BANK, 0));
         p.setCreatedAt(sp.getLong(K_CREATED, 0L));
@@ -31,9 +31,8 @@ public final class PlayerStore {
     }
 
     public static void save(Context ctx, Player p) {
-        if (p.getId() == 0) p.setId(1L);   // compte local unique ; l'id sera attribué par Room plus tard
         prefs(ctx).edit()
-                .putLong(K_ID, p.getId())
+                .putString(K_ID, p.getId())
                 .putString(K_NAME, p.getName())
                 .putInt(K_BANK, p.getBank())
                 .putLong(K_CREATED, p.getCreatedAt())

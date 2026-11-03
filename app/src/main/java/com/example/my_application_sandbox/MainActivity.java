@@ -25,7 +25,21 @@ public class MainActivity extends AppCompatActivity {
                 finish();
                 return;
             }
-            Player.setCurrent(saved);                  // compte existant : on le recharge
+            Player.setCurrent(saved);                  // On défini le compte local pour ne pas bloquer l'UI
+            
+            // Rechargement asynchrone depuis la base de données
+            PlayerRepository.reload(saved.getId(), new PlayerRepository.AccountCallback() {
+                @Override
+                public void onResult(Player player, boolean created) {
+                    Player.setCurrent(player); // Màj du joueur en mémoire
+                    PlayerStore.save(MainActivity.this, player); // Màj du cache local
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    // Échec du réseau ou document supprimé : on continue avec la sauvegarde locale
+                }
+            });
         }
 
         EdgeToEdge.enable(this);
