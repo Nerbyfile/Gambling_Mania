@@ -41,5 +41,8 @@ dependencies {
     testImplementation libs.junit
     androidTestImplementation libs.espresso.core
     androidTestImplementation libs.ext.junit
-    implementation platform('com.google.firebase:firebase-bom:35.1.0')
+    // 1. Importer la Firebase BoM
+    implementation platform('com.google.firebase:firebase-bom:33.7.0')
+    // 2. Déclarer Firestore sans version
+    implementation 'com.google.firebase:firebase-firestore'
 }

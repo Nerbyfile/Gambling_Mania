@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -14,9 +15,8 @@ import androidx.core.view.WindowInsetsCompat;
 
 public class Account_activity extends AppCompatActivity {
 
-    private static final int START_BANK = 1000;
-
     private EditText editName;
+    private Button btnCreate;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,7 +32,7 @@ public class Account_activity extends AppCompatActivity {
         });
 
         editName = findViewById(R.id.edit_name);
-        Button btnCreate = findViewById(R.id.btn_create);
+        btnCreate = findViewById(R.id.btn_create);
 
         btnCreate.setOnClickListener(v -> createAccount());
         editName.setOnEditorActionListener((v, actionId, event) -> {
@@ -56,11 +56,28 @@ public class Account_activity extends AppCompatActivity {
             return;
         }
 
-        Player player = Player.create(name, START_BANK);
-        PlayerStore.save(this, player);
-        Player.setCurrent(player);
+        btnCreate.setEnabled(false);   // évite les doubles envois pendant la requête
 
-        startActivity(new Intent(this, MainActivity.class));
-        finish();
+        PlayerRepository.createOrGet(name, new PlayerRepository.AccountCallback() {
+            @Override
+            public void onResult(Player player, boolean created) {
+                PlayerStore.save(Account_activity.this, player);   // cache local
+                Player.setCurrent(player);
+
+                Toast.makeText(Account_activity.this,
+                        created ? "Compte créé" : "Compte retrouvé, bon retour " + player.getName(),
+                        Toast.LENGTH_SHORT).show();
+
+                startActivity(new Intent(Account_activity.this, MainActivity.class));
+                finish();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                btnCreate.setEnabled(true);
+                Toast.makeText(Account_activity.this,
+                        "Connexion impossible, réessaie", Toast.LENGTH_LONG).show();
+            }
+        });
     }
 }

@@ -1,6 +1,8 @@
 package com.example.my_application_sandbox;
+
 import android.os.Parcel;
 import android.os.Parcelable;
+import java.util.Locale;
 
 /**
  * Joueur générique, indépendant de tout jeu.
@@ -11,28 +13,26 @@ import android.os.Parcelable;
 // Si tu utilises Room : @Entity(tableName = "players")
 public class Player implements Parcelable {
 
-    // ---- Données (stockées en base) ----
-
-    // @PrimaryKey(autoGenerate = true)
-    private long id;          // 0 = pas encore enregistré en base
+    private String id;         // id du document Firestore ; null = pas encore créé
     private String name;
-    private int bank;         // solde du joueur
-    private long createdAt;   // date de création (epoch ms)
-
+    private String nameLower;  // pseudo en minuscules : sert à retrouver un compte existant
+    private int bank;
+    private long createdAt;    // epoch ms
     /** Constructeur sans argument : requis pour charger depuis une base de données. */
     public Player() { }
 
     /** Crée un nouveau joueur (id attribué plus tard par la base). */
     public static Player create(String name, int bank) {
         Player p = new Player();
-        p.name = name;
+        p.setName(name); // Utilise setName pour que nameLower soit correctement initialisé
         p.bank = bank;
         p.createdAt = System.currentTimeMillis();
         return p;
     }
     // Constructeur de dé-sérialisation (l'ordre de lecture doit être IDENTIQUE à l'écriture)
     protected Player(Parcel in) {
-        name = in.readString();
+        id = in.readString();
+        setName(in.readString());
         bank = in.readInt();
         createdAt = in.readLong();
     }
@@ -40,6 +40,7 @@ public class Player implements Parcelable {
     // Écriture des données dans le Parcel
     @Override
     public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(id);
         dest.writeString(name);
         dest.writeInt(bank);
         dest.writeLong(createdAt);
@@ -102,11 +103,17 @@ public class Player implements Parcelable {
 
     // ---- Getters / setters (les setters servent à la base de données) ----
 
-    public long getId() { return id; }
-    public void setId(long id) { this.id = id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
     public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setName(String name) {
+        this.name = name;
+        this.nameLower = (name == null) ? null : name.toLowerCase(Locale.ROOT);
+    }
+
+    public String getNameLower() { return nameLower; }
+    public void setNameLower(String nameLower) { this.nameLower = nameLower; }
 
     public int getBank() { return bank; }
     public void setBank(int bank) { this.bank = bank; }

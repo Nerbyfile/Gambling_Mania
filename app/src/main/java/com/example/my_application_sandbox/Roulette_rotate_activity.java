@@ -79,6 +79,7 @@ public class Roulette_rotate_activity extends AppCompatActivity {
                     btnSpin.setEnabled(true);
                     int payout = player.settle(winning);   // crédite les gains et vide les paris
                     PlayerStore.save(btnSpin.getContext(), player.getPlayer());   // paris vidés : sûr de sauvegarder
+                    PlayerRepository.updateBank(player.getPlayer());
                     String msg = "Numéro : " + winning
                             + (payout > 0 ? " — tu récupères " + payout : " — perdu")
                             + "\nSolde : " + player.getBank();
