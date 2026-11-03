@@ -30,6 +30,10 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
+            android:name=".Salon_activity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
             android:name=".Account_activity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />

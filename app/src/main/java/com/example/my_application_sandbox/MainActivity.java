@@ -36,9 +36,9 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
     }
-    public void enterRoulette(View view){
-        Roulette_player.newSession(Player.current());
-        Intent intent = new Intent(this, Roulette_activity.class);
+    public void enterSalon(View view){
+        Intent intent = new Intent(this, Salon_activity.class);
+        intent.putExtra("EXTRA_USER", Player.current());
         startActivity(intent);
     }
 }

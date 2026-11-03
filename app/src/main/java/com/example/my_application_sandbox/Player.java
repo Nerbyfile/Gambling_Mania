@@ -1,4 +1,6 @@
 package com.example.my_application_sandbox;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 /**
  * Joueur générique, indépendant de tout jeu.
@@ -7,7 +9,7 @@ package com.example.my_application_sandbox;
  * Porte aussi le joueur courant, partagé entre tous les jeux.
  */
 // Si tu utilises Room : @Entity(tableName = "players")
-public class Player {
+public class Player implements Parcelable {
 
     // ---- Données (stockées en base) ----
 
@@ -28,6 +30,38 @@ public class Player {
         p.createdAt = System.currentTimeMillis();
         return p;
     }
+    // Constructeur de dé-sérialisation (l'ordre de lecture doit être IDENTIQUE à l'écriture)
+    protected Player(Parcel in) {
+        name = in.readString();
+        bank = in.readInt();
+        createdAt = in.readLong();
+    }
+
+    // Écriture des données dans le Parcel
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(name);
+        dest.writeInt(bank);
+        dest.writeLong(createdAt);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    // Générateur obligatoire pour Parcelable
+    public static final Creator<Player> CREATOR = new Creator<Player>() {
+        @Override
+        public Player createFromParcel(Parcel in) {
+            return new Player(in);
+        }
+
+        @Override
+        public Player[] newArray(int size) {
+            return new Player[size];
+        }
+    };
 
     // ---- Joueur courant, partagé entre les jeux (champ static : ignoré par Room) ----
 
