@@ -2,6 +2,7 @@ package com.example.my_application_sandbox;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
@@ -15,7 +16,15 @@ import androidx.core.view.WindowInsetsCompat;
 
 public class Account_activity extends AppCompatActivity {
 
+    private static final int MAX_ATTEMPTS = 5;
+    private static final long LOCK_MS = 30_000;
+
+    // static : le compteur survit à la recréation de l'activity
+    private static int failedAttempts = 0;
+    private static long lockedUntil = 0;
+
     private EditText editName;
+    private EditText editPin;
     private Button btnCreate;
 
     @Override
@@ -32,10 +41,11 @@ public class Account_activity extends AppCompatActivity {
         });
 
         editName = findViewById(R.id.edit_name);
+        editPin = findViewById(R.id.edit_pin);
         btnCreate = findViewById(R.id.btn_create);
 
         btnCreate.setOnClickListener(v -> createAccount());
-        editName.setOnEditorActionListener((v, actionId, event) -> {
+        editPin.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 createAccount();
                 return true;
@@ -46,6 +56,7 @@ public class Account_activity extends AppCompatActivity {
 
     private void createAccount() {
         String name = editName.getText().toString().trim();
+        String pin = editPin.getText().toString();
 
         if (name.length() < 2) {
             editName.setError("2 caractères minimum");
@@ -55,12 +66,25 @@ public class Account_activity extends AppCompatActivity {
             editName.setError("Lettres, chiffres, espaces, - _ . uniquement");
             return;
         }
+        if (!pin.matches("\\d{4}")) {
+            editPin.setError("Le PIN doit faire 4 chiffres");
+            return;
+        }
+
+        long now = SystemClock.elapsedRealtime();
+        if (now < lockedUntil) {
+            long secondes = (lockedUntil - now + 999) / 1000;
+            Toast.makeText(this, "Trop d'essais, réessaie dans " + secondes + " s",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         btnCreate.setEnabled(false);   // évite les doubles envois pendant la requête
 
-        PlayerRepository.createOrGet(name, new PlayerRepository.AccountCallback() {
+        PlayerRepository.createOrGet(name, pin, new PlayerRepository.AccountCallback() {
             @Override
             public void onResult(Player player, boolean created) {
+                failedAttempts = 0;
                 PlayerStore.save(Account_activity.this, player);   // cache local
                 Player.setCurrent(player);
 
@@ -75,8 +99,22 @@ public class Account_activity extends AppCompatActivity {
             @Override
             public void onError(Exception e) {
                 btnCreate.setEnabled(true);
-                Toast.makeText(Account_activity.this,
-                        "Connexion impossible, réessaie", Toast.LENGTH_LONG).show();
+
+                if (e instanceof PlayerRepository.WrongPinException) {
+                    failedAttempts++;
+                    if (failedAttempts >= MAX_ATTEMPTS) {
+                        failedAttempts = 0;
+                        lockedUntil = SystemClock.elapsedRealtime() + LOCK_MS;
+                        Toast.makeText(Account_activity.this,
+                                "Trop d'essais, réessaie dans 30 s", Toast.LENGTH_LONG).show();
+                    } else {
+                        editPin.setError("PIN incorrect");
+                    }
+                    editPin.setText("");
+                } else {
+                    Toast.makeText(Account_activity.this,
+                            "Connexion impossible, réessaie", Toast.LENGTH_LONG).show();
+                }
             }
         });
     }

@@ -37,6 +37,19 @@
         android:textColor="#FFFFFF"
         android:textColorHint="#9FBF9F" />
 
+    <EditText
+        android:id="@+id/edit_pin"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:hint="Code PIN (4 chiffres)"
+        android:imeOptions="actionDone"
+        android:inputType="numberPassword"
+        android:maxLength="4"
+        android:singleLine="true"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#9FBF9F" />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
