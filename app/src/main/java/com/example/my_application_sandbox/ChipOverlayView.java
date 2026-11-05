@@ -91,6 +91,36 @@ public class ChipOverlayView extends View {
 
     // ---- Décomposition d'un montant en un minimum de jetons (fusion par valeur) ----
 
+    /** Retourne le pari dont la pile de jetons est sous ce point (coordonnées de la vue), ou null. */
+    public Bet betAt(float x, float y) {
+        if (provider == null || stacks.isEmpty()) return null;
+
+        float d = Math.max(provider.cellSize() * CHIP_SCALE, 14f * density);
+        float r = d / 2f;
+        float off = d * LAYER_OFFSET;
+        float slop = 6f * density;            // marge pour le doigt
+
+        Bet found = null;
+        float bestDist = Float.MAX_VALUE;
+        for (Stack s : stacks) {
+            provider.anchorOf(s.bet, anchor);
+            int n = s.layers.length;
+            float height = d + (n - 1) * off;
+            float top = anchor[1] - height / 2f;
+            top = Math.max(0f, Math.min(top, getHeight() - height));
+            float cx = Math.max(r, Math.min(anchor[0], getWidth() - r));
+
+            if (x < cx - r - slop || x > cx + r + slop) continue;
+            if (y < top - slop || y > top + height + slop) continue;
+
+            // si deux piles se chevauchent, on prend celle dont le centre est le plus proche
+            float dx = x - cx, dy = y - (top + height / 2f);
+            float dist = dx * dx + dy * dy;
+            if (dist < bestDist) { bestDist = dist; found = s.bet; }
+        }
+        return found;
+    }
+
     private static int[] decompose(int amount) {
         final int INF = Integer.MAX_VALUE;
         int[] best = new int[amount + 1];

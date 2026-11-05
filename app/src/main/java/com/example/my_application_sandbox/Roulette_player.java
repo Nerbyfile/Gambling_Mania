@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
+import java.util.Iterator;
 
 public class Roulette_player {
 
@@ -83,6 +84,16 @@ public class Roulette_player {
         last.bet.Mise -= last.amount;
         player.credit(last.amount);
         if (last.bet.Mise <= 0) bets.remove(last.bet);
+    }
+
+    /** Retire tous les jetons d'un pari et rembourse. */
+    public void eraseBet(Bet bet) {
+        if (!bets.remove(bet)) return;
+        player.credit(bet.Mise);
+        // on retire aussi ses placements de l'historique, sinon « Annuler » rembourserait une 2e fois
+        for (Iterator<Placement> it = history.iterator(); it.hasNext(); ) {
+            if (it.next().bet == bet) it.remove();
+        }
     }
 
     /** Retire tous les paris et rembourse. */

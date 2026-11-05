@@ -2,23 +2,40 @@ package com.example.my_application_sandbox;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.RelativeSizeSpan;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.GridLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.text.InputFilter;
+import android.text.InputType;
+import android.view.WindowManager;
+import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.content.Context;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.content.res.ColorStateList;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.SystemBarStyle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.appcompat.app.AlertDialog;
 
 import com.example.my_application_sandbox.RouletteTouchHelper.Bet;
 import com.example.my_application_sandbox.RouletteTouchHelper.Zone;
 import com.example.my_application_sandbox.RouletteTouchHelper.Kind;
+import com.google.android.material.button.MaterialButton;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -36,20 +53,41 @@ public class Roulette_activity extends AppCompatActivity {
     private View jetonSelectionne = null;
     private int mise = 0;
 
-    private TextView txtBank, txtTotalBet, txtChip;
+    private TextView txtBank, txtChip;
+    private Button txtTotalBet;
     private ChipOverlayView chipOverlay;
+
+    private Button btnGomme;
+    private boolean gommeActive = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
 
+        EdgeToEdge.enable(this, SystemBarStyle.dark(Color.TRANSPARENT));
         setContentView(R.layout.activity_roulette);
+
+        // Barres système : le fond vert passe dessous, le salon reste dans la zone visible
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            int padding = (int) (10 * getResources().getDisplayMetrics().density);
-            v.setPadding(systemBars.left + padding, systemBars.top + padding, systemBars.right + padding, systemBars.bottom + padding);
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+
+            // Haut : la barre foncée s'étend sous la barre d'état
+            View topBar = findViewById(R.id.topBar);
+            int h = (int) (56 * getResources().getDisplayMetrics().density);
+            topBar.setPadding(topBar.getPaddingLeft(), bars.top, topBar.getPaddingRight(), 0);
+            topBar.getLayoutParams().height = h + bars.top;
+            topBar.requestLayout();
+
+            // Côtés et bas : le vert passe sous la barre de navigation
+            v.setPadding(bars.left, 0, bars.right, bars.bottom);
             return insets;
+        });
+
+        // Bouton accueil : retour au salon
+        findViewById(R.id.btnHome).setOnClickListener(v -> {
+            Intent intent = new Intent(this, Salon_activity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
         });
 
         initViews();                                                                                // Get all cells from grid
@@ -68,6 +106,11 @@ public class Roulette_activity extends AppCompatActivity {
             findViewById(ids[i]).setOnClickListener(v -> selectionnerJeton(v, valeur));
         }
 
+        //listener changer val jeton
+        findViewById(R.id.btn_edit_chip).setOnClickListener(v -> demanderValeurJeton());
+        //listener gomme
+        btnGomme.setOnClickListener(v -> toggleGomme());
+
         refreshUi();
     }
 
@@ -79,9 +122,10 @@ public class Roulette_activity extends AppCompatActivity {
     }
 
     private void initViews() {
-        txtBank     = findViewById(R.id.txt_bank);
-        txtTotalBet = findViewById(R.id.txt_total_bet);
-        txtChip     = findViewById(R.id.txt_chip);
+        txtBank = findViewById(R.id.txt_bank);
+        txtTotalBet = findViewById(R.id.button_total_bet);
+        txtChip = findViewById(R.id.txt_chip);
+        btnGomme = findViewById(R.id.btn_gomme);
 
         cells[0] = findViewById(R.id.leZ);
         for (int i = 1; i <= 36; i++) {
@@ -120,7 +164,24 @@ public class Roulette_activity extends AppCompatActivity {
     private void setupTouch(GridLayout grid) {
 
         RouletteTouchHelper helper = new RouletteTouchHelper(0, 0, 1, 1, edge_w_ratio);
+
         grid.setOnTouchListener((v, event) -> {
+
+            // Mode gomme : un appui (ou un glissé) sur une pile de jetons la supprime
+            if (gommeActive) {
+                int a = event.getActionMasked();
+                if (a == MotionEvent.ACTION_DOWN || a == MotionEvent.ACTION_MOVE) {
+                    Bet cible = chipOverlay.betAt(event.getX(), event.getY());
+                    if (cible != null) {
+                        player.eraseBet(cible);
+                        v.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
+                        refreshUi();
+                    }
+                } else if (a == MotionEvent.ACTION_UP) {
+                    v.performClick();
+                }
+                return true;
+            }
 
             // Recalcul de la taille des cellules en temps réel (immunisé contre les redimensionnements de l'UI dus aux insets)
             float cell_w = (cells[3].getLeft() - cells[1].getLeft()) / 2f;
@@ -216,10 +277,138 @@ public class Roulette_activity extends AppCompatActivity {
         refreshUi();
     }
 
+    /** Active ou désactive le mode gomme. */
+    private void toggleGomme() {
+        if (!gommeActive && player.getBets().isEmpty()) {
+            toast("Aucun jeton sur la table");
+            return;
+        }
+        setGomme(!gommeActive);
+    }
+
+    private void setGomme(boolean actif) {
+        gommeActive = actif;
+        styleGomme();
+        refreshUi();
+    }
+
+    /** bouton gomme rouge au repos, passe au blanc pour le mettre en actif */
+    private void styleGomme() {
+        int fond  = gommeActive ? 0xFFFFFFFF : 0xFFE53935;
+        int icone = gommeActive ? 0xFFE53935 : 0xFFFFFFFF;
+        btnGomme.setBackgroundTintList(ColorStateList.valueOf(fond));
+        if (btnGomme instanceof MaterialButton) {
+            ((MaterialButton) btnGomme).setIconTint(ColorStateList.valueOf(icone));
+        }
+    }
+
+    /** Fenêtre jeton personnalisé. */
+    private void demanderValeurJeton() {
+        if (player.getBank() <= 0) {
+            toast("Solde insuffisant");
+            return;
+        }
+
+        EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        input.setFilters(new InputFilter[]{ new InputFilter.LengthFilter(9) });   // limiter val max
+        input.setImeOptions(EditorInfo.IME_ACTION_DONE);   // la touche v du clavier valide
+        input.setHint("De 1 à " + player.getBank());
+        if (mise > 0) {
+            input.setText(String.valueOf(mise));   // pré-rempli avec le jeton actuel
+            input.selectAll();
+        }
+
+        // marges autour du champ
+        FrameLayout box = new FrameLayout(this);
+        int m = (int) (20 * getResources().getDisplayMetrics().density);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(m, m / 2, m, 0);
+        box.addView(input, lp);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Valeur du jeton")
+                .setMessage("Entre le montant à miser à chaque pari.")
+                .setView(box)
+                .setPositiveButton("Valider", null)   // redéfini plus bas pour garder la fenêtre ouverte en cas d'erreur
+                .setNeutralButton("ALL IN", null)
+                .setNegativeButton("Annuler", null)
+                .create();
+
+        // le clavier s'ouvre tout seul, le curseur est déjà dans le champ
+        dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        dialog.setOnShowListener(d -> {
+            input.requestFocus();
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
+        });
+        dialog.show();
+
+        // la touche v du clavier valide
+        input.setOnEditorActionListener((tv, actionId, ev) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+                return true;
+            }
+            return false;
+        });
+
+        //bouton all in
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(b -> {
+            appliquerJetonPerso(player.getBank());   // tout le solde restant devient la valeur du jeton
+            dialog.dismiss();
+        });
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(b -> {
+            int valeur;
+            try {
+                valeur = Integer.parseInt(input.getText().toString().trim());
+            } catch (NumberFormatException e) {
+                input.setError("Entre un nombre");
+                return;
+            }
+            if (valeur < 1) {
+                input.setError("Minimum 1");
+                return;
+            }
+            if (valeur > player.getBank()) {
+                input.setError("Maximum " + player.getBank());
+                return;
+            }
+            appliquerJetonPerso(valeur);
+            dialog.dismiss();
+        });
+    }
+
+    /** Le jeton perso remplace le jeton sélectionné. */
+    private void appliquerJetonPerso(int valeur) {
+        if (jetonSelectionne != null) {
+            jetonSelectionne.animate().scaleX(1f).scaleY(1f).setDuration(150).start();
+            jetonSelectionne = null;   // plus aucun jeton de la colonne n'est actif
+        }
+        mise = valeur;
+        refreshUi();                   // le texte affiche « Jeton : 75 »
+    }
+
     private void refreshUi() {
+
+        //desac la gomme si il n'y a plus rien a enlever
+        if (gommeActive && player.getBets().isEmpty()) {
+            gommeActive = false;
+            styleGomme();
+        }
+
         txtBank.setText("Solde : " + player.getBank());
-        txtTotalBet.setText("Mise totale : " + player.getTotalStake());
-        txtChip.setText(mise > 0 ? "Jeton : " + mise : "Jeton : aucun");
+
+        //boutton de play split en 2 pour ecrire le haut plus gros que le bas
+        String texteBouton = "PLAY\nMise totale : " + player.getTotalStake();
+        SpannableString spannable = new SpannableString(texteBouton);
+        spannable.setSpan(new RelativeSizeSpan(0.7f), 5, texteBouton.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        txtTotalBet.setText(spannable);
+
+        if (gommeActive) txtChip.setText("Gomme active");
+        else txtChip.setText(mise > 0 ? "Jeton : " + mise : "Jeton : aucun");
         chipOverlay.setBets(player.getBets());chipOverlay.setBets(player.getBets());
     }
 
