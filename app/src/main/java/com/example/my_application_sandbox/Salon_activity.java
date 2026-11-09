@@ -1,28 +1,43 @@
 package com.example.my_application_sandbox;
 
+import android.animation.ValueAnimator;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.SystemBarStyle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import android.animation.ValueAnimator;
-import android.widget.TextView;
+import com.example.my_application_sandbox.SalonRepository.SalonMember;
+import com.google.firebase.firestore.ListenerRegistration;
+
 import java.text.NumberFormat;
+import java.util.List;
 
-import androidx.activity.SystemBarStyle;
-import android.graphics.Color;
-
+/** Hall des jeux. Solo si lancé sans salon, salon multijoueur si EXTRA_SALON_ID est fourni. */
 public class Salon_activity extends AppCompatActivity {
+
+    public static final String EXTRA_SALON_ID = "EXTRA_SALON_ID";
+    public static final String EXTRA_SALON_NAME = "EXTRA_SALON_NAME";
+    public static final String EXTRA_SALON_CODE = "EXTRA_SALON_CODE";
 
     private TextView tvBanque;
     private final NumberFormat format = NumberFormat.getIntegerInstance();
     private int soldeAffiche = -1;
+
+    // ---- Multijoueur ----
+    private String salonId, salonName, salonCode;     // salonId == null : salon solo
+    private TextView tvInfo;
+    private ListenerRegistration regMembers;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +56,7 @@ public class Salon_activity extends AppCompatActivity {
             PlayerRepository.reload(saved.getId(), new PlayerRepository.AccountCallback() {
                 @Override
                 public void onResult(Player player, boolean created) {
-                    // on met à jour l'objet existant au lieu de le remplacer (voir plus bas)
+                    // on met à jour l'objet existant au lieu de le remplacer
                     saved.setName(player.getName());
                     saved.setBank(player.getBank());
                     PlayerStore.save(Salon_activity.this, saved);
@@ -74,18 +89,30 @@ public class Salon_activity extends AppCompatActivity {
             return insets;
         });
 
+        // Mode : solo ou salon multijoueur
+        salonId = getIntent().getStringExtra(EXTRA_SALON_ID);
+        if (salonId != null) setupMultiplayer();
+
         // On recupère la zone pour ecrire l'argent en banque sur le xml
         tvBanque = findViewById(R.id.tvBanque);
 
-        // Bouton accueil : retour à MainActivity
+        // Bouton accueil : multijoueur = on quitte le salon (voir onDestroy), solo = retour à MainActivity
         findViewById(R.id.btnHome).setOnClickListener(v -> {
+            if (salonId != null) {
+                finish();
+                return;
+            }
             Intent intent = new Intent(this, MainActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
         });
 
-        // Roulette
-        Runnable roulette = () -> startActivity(new Intent(this, Roulette_activity.class));
+        // Roulette : rejoint la table du salon en multijoueur, partie solo sinon
+        Runnable roulette = () -> {
+            Intent i = new Intent(this, Roulette_activity.class);
+            if (salonId != null) i.putExtra(EXTRA_SALON_ID, salonId);
+            startActivity(i);
+        };
 
         bind(R.id.roulette, roulette);
         bind(R.id.label_roulette, roulette);
@@ -105,6 +132,68 @@ public class Salon_activity extends AppCompatActivity {
         bind(R.id.slot_machines, slots);
         bind(R.id.label_slots, slots);
     }
+
+    // ===================== Multijoueur =====================
+
+    /** Bandeau en bas de l'écran : nom, code, joueurs présents. */
+    private void setupMultiplayer() {
+        salonName = getIntent().getStringExtra(EXTRA_SALON_NAME);
+        salonCode = getIntent().getStringExtra(EXTRA_SALON_CODE);
+
+        tvInfo = new TextView(this);
+        tvInfo.setTextColor(Color.WHITE);
+        tvInfo.setBackgroundColor(0xAA000000);
+        int pad = (int) (12 * getResources().getDisplayMetrics().density);
+        tvInfo.setPadding(pad, pad, pad, pad);
+        addContentView(tvInfo, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM));
+        ViewCompat.setOnApplyWindowInsetsListener(tvInfo, (v, insets) -> {
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(pad, pad, pad, pad + bars.bottom);
+            return insets;
+        });
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (salonId != null) regMembers = SalonRepository.listenMembers(salonId, this::showMembers);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (regMembers != null) {
+            regMembers.remove();
+            regMembers = null;
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (isFinishing() && salonId != null) {
+            SalonRepository.leaveSalon(salonId, Player.current().getId());
+        }
+    }
+
+    private void showMembers(List<SalonMember> members) {
+        int atTable = 0;
+        StringBuilder names = new StringBuilder();
+        for (SalonMember m : members) {
+            if (SalonRepository.GAME_ROULETTE.equals(m.getGame())) atTable++;
+            if (names.length() > 0) names.append(", ");
+            names.append(m.getName());
+        }
+        tvInfo.setText(salonName + (salonCode != null ? "  ·  code " + salonCode : "") + "\n"
+                + members.size() + " joueur(s) : " + names);
+
+        // « Roulette (n) » : nombre de joueurs à la table
+        View label = findViewById(R.id.label_roulette);
+        if (label instanceof TextView) ((TextView) label).setText("Roulette (" + atTable + ")");
+    }
+
+    // ===================== Commun =====================
 
     // refresh de la banque a chaque retour sur la page
     @Override

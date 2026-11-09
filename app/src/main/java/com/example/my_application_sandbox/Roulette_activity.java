@@ -1,46 +1,53 @@
 package com.example.my_application_sandbox;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.SystemClock;
+import android.text.InputFilter;
+import android.text.InputType;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.RelativeSizeSpan;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.GridLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.text.InputFilter;
-import android.text.InputType;
-import android.view.WindowManager;
-import android.widget.EditText;
-import android.widget.FrameLayout;
-import android.content.Context;
-import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
-import android.content.res.ColorStateList;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.SystemBarStyle;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.appcompat.app.AlertDialog;
 
 import com.example.my_application_sandbox.RouletteTouchHelper.Bet;
-import com.example.my_application_sandbox.RouletteTouchHelper.Zone;
 import com.example.my_application_sandbox.RouletteTouchHelper.Kind;
+import com.example.my_application_sandbox.RouletteTouchHelper.Zone;
+import com.example.my_application_sandbox.SalonRepository.TableState;
 import com.google.android.material.button.MaterialButton;
 
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/** Table de roulette. Solo si lancée sans salon ; table d'un salon multijoueur si EXTRA_SALON_ID est fourni. */
 public class Roulette_activity extends AppCompatActivity {
 
     private final TextView[] cells = new TextView[37];   // list containing all cell
@@ -59,6 +66,18 @@ public class Roulette_activity extends AppCompatActivity {
 
     private Button btnGomme;
     private boolean gommeActive = false;
+
+    // ---- Multijoueur (table d'un salon) ----
+    private String salonId = null;                       // null = partie solo
+    private RouletteTableSession session;
+    private TableState table;
+    private SpinOverlayView spin;
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private String phaseKey = null;                      // "tour:phase" déjà traité
+    private long phaseDeadline = 0;
+    private int settledRound = -1;                       // dernier tour réglé
+    private int betsRound = -1;                          // tour où j'ai posé mes jetons
+    private boolean bettingOpen = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,8 +102,12 @@ public class Roulette_activity extends AppCompatActivity {
             return insets;
         });
 
-        // Bouton accueil : retour au salon
+        // Bouton accueil : retour au salon (en multijoueur, on revient simplement au hall du salon)
         findViewById(R.id.btnHome).setOnClickListener(v -> {
+            if (salonId != null) {
+                finish();
+                return;
+            }
             Intent intent = new Intent(this, Salon_activity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
@@ -94,7 +117,11 @@ public class Roulette_activity extends AppCompatActivity {
         GridLayout grid = findViewById(R.id.table_grid);
         grid.post(() -> setupTouch(grid));
 
-        player = Roulette_player.getInstance();   // joueur créé dans MainActivity.enterRoulette()
+        player = Roulette_player.getInstance();   // joueur courant
+
+        // Mode : solo ou table d'un salon
+        salonId = getIntent().getStringExtra(Salon_activity.EXTRA_SALON_ID);
+        if (salonId != null) setupMultiplayer();
 
         // Jetons
         int[] ids = { R.id.chip2, R.id.chip5, R.id.chip10,
@@ -115,10 +142,24 @@ public class Roulette_activity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        if (session != null) session.start();         // multijoueur : on s'assoit et on écoute la table
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         // au retour de la roue, le solde a changé
         if (player != null) refreshUi();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (session != null) session.stop();
+        handler.removeCallbacksAndMessages(null);
+        phaseKey = null;                              // à la reconnexion, l'état est retraité
     }
 
     private void initViews() {
@@ -172,10 +213,10 @@ public class Roulette_activity extends AppCompatActivity {
                 int a = event.getActionMasked();
                 if (a == MotionEvent.ACTION_DOWN || a == MotionEvent.ACTION_MOVE) {
                     Bet cible = chipOverlay.betAt(event.getX(), event.getY());
-                    if (cible != null) {
+                    if (cible != null && (salonId == null || bettingOpen)) {
                         player.eraseBet(cible);
                         v.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
-                        refreshUi();
+                        betsChanged();
                     }
                 } else if (a == MotionEvent.ACTION_UP) {
                     v.performClick();
@@ -234,6 +275,7 @@ public class Roulette_activity extends AppCompatActivity {
 
     /** Enregistre le pari tenu par le doigt avec le jeton sélectionné. */
     private void placeBet(Bet bet) {
+        if (!canEdit()) return;
         if (mise == 0) {
             toast("Sélectionne d'abord un jeton");
             return;
@@ -242,18 +284,21 @@ public class Roulette_activity extends AppCompatActivity {
             toast("Solde insuffisant");
             return;
         }
-        refreshUi();
+        if (table != null) betsRound = table.getRound();
+        betsChanged();
     }
 
     // ---- Boutons (android:onClick) ----
     public void undo_bet(View view) {
+        if (!canEdit()) return;
         player.removeBet();
-        refreshUi();
+        betsChanged();
     }
 
     public void clear_bets(View view) {
+        if (!canEdit()) return;
         player.removeAllBets();
-        refreshUi();
+        betsChanged();
     }
 
     private void selectionnerJeton(View jeton, int valeur) {
@@ -401,22 +446,46 @@ public class Roulette_activity extends AppCompatActivity {
 
         txtBank.setText("Solde : " + player.getBank());
 
+        // Titre du bouton PLAY : "PLAY" en solo, phase et compte à rebours en multijoueur
+        String titre = "PLAY";
+        if (salonId != null) {
+            if (table == null) {
+                titre = "CONNEXION…";
+            } else {
+                switch (table.getPhase()) {
+                    case TableState.BETTING:
+                        long left = Math.max(0, (phaseDeadline - SystemClock.elapsedRealtime() + 999) / 1000);
+                        titre = left > 0 ? "MISEZ · " + left + " s" : "MISES FERMÉES";
+                        break;
+                    case TableState.SPINNING: titre = "LA ROUE TOURNE"; break;
+                    case TableState.RESULT:   titre = "RÉSULTAT"; break;
+                    default:                  titre = "▶ REPRENDRE"; break;
+                }
+            }
+        }
+
         //boutton de play split en 2 pour ecrire le haut plus gros que le bas
-        String texteBouton = "PLAY\nMise totale : " + player.getTotalStake();
+        String texteBouton = titre + "\nMise totale : " + player.getTotalStake();
         SpannableString spannable = new SpannableString(texteBouton);
-        spannable.setSpan(new RelativeSizeSpan(0.7f), 5, texteBouton.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        spannable.setSpan(new RelativeSizeSpan(0.7f), titre.length() + 1, texteBouton.length(),
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         txtTotalBet.setText(spannable);
 
         if (gommeActive) txtChip.setText("Gomme active");
         else txtChip.setText(mise > 0 ? "Jeton : " + mise : "Jeton : aucun");
-        chipOverlay.setBets(player.getBets());chipOverlay.setBets(player.getBets());
+        chipOverlay.setBets(player.getBets());
     }
 
     private void toast(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
+    /** Bouton PLAY : solo = lance la roue ; multijoueur = relance une table en pause. */
     public void start_roulette(View view) {
+        if (salonId != null) {
+            if (table != null && TableState.IDLE.equals(table.getPhase())) session.wake();
+            return;
+        }
         if (player.getBets().isEmpty()) {
             toast("Place au moins un pari");
             return;
@@ -424,6 +493,123 @@ public class Roulette_activity extends AppCompatActivity {
         Intent intent = new Intent(this, Roulette_rotate_activity.class);
         startActivity(intent);
     }
+
+    // ===================== Multijoueur =====================
+
+    private void setupMultiplayer() {
+        bettingOpen = false;                             // fermé tant qu'on n'a pas l'état de la table
+        spin = new SpinOverlayView(this);
+        addContentView(spin, new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        session = new RouletteTableSession(salonId, Player.current().getId(),
+                new RouletteTableSession.Listener() {
+                    @Override public void onTable(TableState t) { onTableChanged(t); }
+
+                    @Override public void onOthersBets(List<List<Bet>> perPlayer) {
+                        chipOverlay.setOtherBets(perPlayer);
+                    }
+
+                    @Override public void onClosed() {
+                        toast("Le salon a été fermé");
+                        finish();
+                    }
+                });
+    }
+
+    /** Réagit à l'état de la table (basé sur l'état : on peut arriver à n'importe quel moment). */
+    private void onTableChanged(TableState t) {
+        table = t;
+        String key = t.getRound() + ":" + t.getPhase();
+        boolean fresh = !key.equals(phaseKey);
+        phaseKey = key;
+
+        switch (t.getPhase()) {
+            case TableState.BETTING:
+                bettingOpen = true;
+                spin.hide();
+                if (fresh) {
+                    // des mises d'un tour que j'ai manqué (appli en arrière-plan) : remboursées
+                    if (!player.getBets().isEmpty() && betsRound != t.getRound()) {
+                        player.removeAllBets();
+                        toast("Mises du tour précédent remboursées");
+                    }
+                    phaseDeadline = SystemClock.elapsedRealtime() + RouletteTableSession.BET_MS;
+                    handler.removeCallbacks(ticker);
+                    handler.post(ticker);
+                }
+                break;
+
+            case TableState.SPINNING:
+                bettingOpen = false;
+                if (fresh) {
+                    spin.spinTo(t.getWinningNumber(), RouletteTableSession.SPIN_MS, () -> settleRound(t));
+                }
+                break;
+
+            case TableState.RESULT:
+                bettingOpen = false;
+                settleRound(t);                          // sans effet si déjà réglé à la fin de la roue
+                break;
+
+            default:                                     // IDLE : table en pause
+                bettingOpen = false;
+                spin.hide();
+                break;
+        }
+        refreshUi();
+    }
+
+    /** Règle mes mises du tour : gains, sauvegarde, et retire mes jetons chez les autres. */
+    private void settleRound(TableState t) {
+        if (settledRound == t.getRound()) return;
+        settledRound = t.getRound();
+
+        int winning = t.getWinningNumber();
+        int stake = player.getTotalStake();
+        int payout = player.settle(winning);
+        saveBank();
+        session.publishNow(player.getBets(), t.getRound());     // liste vide maintenant
+
+        String txt = "Numéro " + winning;
+        if (stake > 0) txt += payout > 0 ? "\nTu gagnes " + payout : "\nPerdu";
+        spin.showResult(txt);
+        refreshUi();
+    }
+
+    private void saveBank() {
+        PlayerStore.save(this, player.getPlayer());
+        PlayerRepository.updateBank(player.getPlayer());
+    }
+
+    /** Compte à rebours affiché sur le bouton PLAY ; ferme mes mises à 0 s. */
+    private final Runnable ticker = new Runnable() {
+        @Override public void run() {
+            if (bettingOpen && SystemClock.elapsedRealtime() >= phaseDeadline) {
+                bettingOpen = false;
+                session.flushBets();                     // envoie tout de suite mes dernières mises
+            }
+            refreshUi();
+            if (table != null && TableState.BETTING.equals(table.getPhase())) handler.postDelayed(this, 1000);
+        }
+    };
+
+    private boolean canEdit() {
+        if (salonId != null && !bettingOpen) {
+            toast("Les mises sont fermées");
+            return false;
+        }
+        return true;
+    }
+
+    /** À appeler après chaque changement de mises : met l'écran à jour et publie (envoi regroupé). */
+    private void betsChanged() {
+        refreshUi();
+        if (session != null && table != null) session.publishBets(player.getBets(), table.getRound());
+    }
+
+    // ===================== Position des jetons =====================
+
     /** Point d'ancrage du jeton d'un pari, en coordonnées de la grille. */
     private void computeAnchor(Bet bet, float[] out) {
         // Chances simples, douzaines, colonnes : centre de la zone
@@ -485,6 +671,22 @@ public class Roulette_activity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (isFinishing()) player.removeAllBets();
+        if (!isFinishing()) return;
+
+        if (session == null) {                           // solo
+            player.removeAllBets();
+            return;
+        }
+
+        spin.hide();
+        boolean roundRunning = table != null
+                && (TableState.SPINNING.equals(table.getPhase()) || TableState.RESULT.equals(table.getPhase()));
+        if (roundRunning && settledRound != table.getRound()) {
+            player.settle(table.getWinningNumber());     // le numéro est déjà connu : mise réglée maintenant
+            saveBank();
+        } else {
+            player.removeAllBets();                      // mises encore ouvertes ou table en pause : remboursées
+        }
+        session.leave();
     }
 }

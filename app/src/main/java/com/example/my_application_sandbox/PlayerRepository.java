@@ -18,6 +18,7 @@ public final class PlayerRepository {
     private static final String COLLECTION = "players";
     private static final int START_BANK = 1000;
 
+    // Callback pour gérer les réponse firestore
     public interface AccountCallback {
         /** created = true si le compte vient d'être créé, false si un compte existant a été retrouvé. */
         void onResult(Player player, boolean created);

@@ -43,21 +43,27 @@ public class ChipOverlayView extends View {
         final Bet bet;
         final int[] layers;   // indices dans DENOMS, du plus gros (bas) au plus petit (haut)
         final String label;
+        final int slot;       // 0 = mes jetons ; 1, 2... = autres joueurs (décalage)
 
-        Stack(Bet bet) {
+        Stack(Bet bet) { this(bet, 0); }
+
+        Stack(Bet bet, int slot) {
             this.bet = bet;
+            this.slot = slot;
             int[] all = decompose(bet.Mise);
             this.layers = Arrays.copyOf(all, Math.min(all.length, MAX_LAYERS));
             this.label = format(bet.Mise);
         }
     }
 
-    private final List<Stack> stacks = new ArrayList<>();
+    private final List<Stack> stacks = new ArrayList<>();   // mes jetons
+    private final List<Stack> others = new ArrayList<>();   // jetons des autres joueurs
     private final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint text = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final float[] anchor = new float[2];
     private AnchorProvider provider;
     private float density;
+    private float chipAlpha = 1f;
 
     public ChipOverlayView(Context c) { super(c); init(); }
     public ChipOverlayView(Context c, AttributeSet a) { super(c, a); init(); }
@@ -78,7 +84,7 @@ public class ChipOverlayView extends View {
         invalidate();
     }
 
-    /** Met à jour les jetons à partir des paris du joueur. */
+    /** Met à jour mes jetons à partir de mes paris. */
     public void setBets(List<Bet> bets) {
         stacks.clear();
         for (Bet b : bets) {
@@ -89,9 +95,20 @@ public class ChipOverlayView extends View {
         invalidate();
     }
 
-    // ---- Décomposition d'un montant en un minimum de jetons (fusion par valeur) ----
+    /** Mises des autres joueurs (une liste par joueur), dessinées décalées et semi-transparentes. */
+    public void setOtherBets(List<List<Bet>> perPlayer) {
+        others.clear();
+        for (int i = 0; i < perPlayer.size(); i++) {
+            for (Bet b : perPlayer.get(i)) {
+                if (b.Mise <= 0) continue;
+                Stack s = new Stack(b, i + 1);
+                if (s.layers.length > 0) others.add(s);
+            }
+        }
+        invalidate();
+    }
 
-    /** Retourne le pari dont la pile de jetons est sous ce point (coordonnées de la vue), ou null. */
+    /** Retourne mon pari dont la pile de jetons est sous ce point (coordonnées de la vue), ou null. */
     public Bet betAt(float x, float y) {
         if (provider == null || stacks.isEmpty()) return null;
 
@@ -120,6 +137,8 @@ public class ChipOverlayView extends View {
         }
         return found;
     }
+
+    // ---- Décomposition d'un montant en un minimum de jetons (fusion par valeur) ----
 
     private static int[] decompose(int amount) {
         final int INF = Integer.MAX_VALUE;
@@ -167,13 +186,20 @@ public class ChipOverlayView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        if (provider == null || stacks.isEmpty()) return;
+        if (provider == null || (stacks.isEmpty() && others.isEmpty())) return;
 
         float d = Math.max(provider.cellSize() * CHIP_SCALE, 14f * density);
         float r = d / 2f;
         float off = d * LAYER_OFFSET;
 
-        for (Stack s : stacks) {
+        chipAlpha = 0.6f;                                   // les autres joueurs d'abord, en dessous
+        drawStacks(canvas, others, d, r, off);
+        chipAlpha = 1f;                                     // puis mes jetons par-dessus
+        drawStacks(canvas, stacks, d, r, off);
+    }
+
+    private void drawStacks(Canvas canvas, List<Stack> list, float d, float r, float off) {
+        for (Stack s : list) {
             provider.anchorOf(s.bet, anchor);
 
             int n = s.layers.length;
@@ -181,8 +207,9 @@ public class ChipOverlayView extends View {
             // pile centrée sur le point d'ancrage, mais gardée dans la vue
             float top = anchor[1] - height / 2f;
             top = Math.max(0f, Math.min(top, getHeight() - height));
-            float cx = Math.max(r, Math.min(anchor[0], getWidth() - r));
-            float baseCy = top + height - r;   // centre du jeton du bas
+            float cx = anchor[0] + s.slot * d * 0.30f;      // chaque autre joueur est décalé
+            cx = Math.max(r, Math.min(cx, getWidth() - r));
+            float baseCy = top + height - r;                // centre du jeton du bas
 
             for (int i = 0; i < n; i++) {
                 float cy = baseCy - i * off;
@@ -191,17 +218,23 @@ public class ChipOverlayView extends View {
         }
     }
 
+    /** Applique la transparence courante à une couleur ARGB. */
+    private int a(int argb) {
+        int alpha = (int) (((argb >>> 24) & 0xFF) * chipAlpha);
+        return (argb & 0x00FFFFFF) | (alpha << 24);
+    }
+
     private void drawChip(Canvas canvas, float cx, float cy, float r, int color, String label) {
         // ombre
-        fill.setColor(0x55000000);
+        fill.setColor(a(0x55000000));
         canvas.drawCircle(cx + r * 0.08f, cy + r * 0.08f, r, fill);
 
         // corps
-        fill.setColor(color);
+        fill.setColor(a(color));
         canvas.drawCircle(cx, cy, r, fill);
 
         // marques blanches sur la tranche
-        fill.setColor(0xFFFFFFFF);
+        fill.setColor(a(0xFFFFFFFF));
         for (int i = 0; i < 8; i++) {
             canvas.save();
             canvas.rotate(i * 45f, cx, cy);
@@ -210,11 +243,12 @@ public class ChipOverlayView extends View {
         }
 
         // disque intérieur clair
-        fill.setColor(0xFFF2F2F2);
+        fill.setColor(a(0xFFF2F2F2));
         canvas.drawCircle(cx, cy, r * 0.66f, fill);
 
         // montant (seulement sur le jeton du dessus)
         if (label != null) {
+            text.setColor(a(0xFF1A1A1A));
             text.setTextSize(r * 0.9f);
             float w = text.measureText(label);
             float max = r * 1.15f;

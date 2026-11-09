@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 
 import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -12,13 +13,14 @@ import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends AppCompatActivity {
 
-    //comment that comment
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Récupération du joueur dans le cache et dans firestore
         if (!Player.hasCurrent()) {
+
+            // Chargement du cache
             Player saved = PlayerStore.load(this);
             if (saved == null) {                       // première ouverture : pas de compte
                 startActivity(new Intent(this, Account_activity.class));
@@ -26,13 +28,13 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             Player.setCurrent(saved);                  // On défini le compte local pour ne pas bloquer l'UI
-            
+
             // Rechargement asynchrone depuis la base de données
             PlayerRepository.reload(saved.getId(), new PlayerRepository.AccountCallback() {
                 @Override
                 public void onResult(Player player, boolean created) {
-                    Player.setCurrent(player); // Màj du joueur en mémoire
-                    PlayerStore.save(MainActivity.this, player); // Màj du cache local
+                    Player.setCurrent(player);                          // Màj du joueur en mémoire
+                    PlayerStore.save(MainActivity.this, player);    // Màj du cache local
                 }
 
                 @Override
@@ -50,9 +52,18 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
     }
-    public void enterSalon(View view){
-        Intent intent = new Intent(this, Salon_activity.class);
-        intent.putExtra("EXTRA_USER", Player.current());
-        startActivity(intent);
+
+    /** Solo : le salon habituel. Multijoueur : la liste des salons. */
+    public void enterSalon(View view) {
+        new AlertDialog.Builder(this)
+                .setTitle("Jouer")
+                .setItems(new CharSequence[]{"Jouer seul", "Salons multijoueur"}, (d, which) -> {
+                    if (which == 0) {
+                        startActivity(new Intent(this, Salon_activity.class));
+                    } else {
+                        startActivity(new Intent(this, SalonList_activity.class));
+                    }
+                })
+                .show();
     }
 }
