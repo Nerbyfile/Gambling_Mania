@@ -52,111 +52,160 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:gravity="center"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:paddingVertical="6dp">
 
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:paddingHorizontal="16dp">
-
-            <!-- Ligne du haut (Annuler + Gomme) -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/btn_undo"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginEnd="6dp"
-                    android:layout_weight="1"
-                    android:backgroundTint="#E53935"
-                    android:elevation="6dp"
-                    android:fontFamily="sans-serif-black"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:letterSpacing="0.05"
-                    android:minHeight="0dp"
-                    android:onClick="undo_bet"
-                    android:text="Annuler"
-                    android:textColor="#FFFFFF"
-                    app:cornerRadius="12dp" />
-
-                <Button
-                    android:id="@+id/btn_gomme"
-                    android:layout_width="50dp"
-                    android:layout_height="match_parent"
-                    android:backgroundTint="#E53935"
-                    android:elevation="6dp"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:minWidth="0dp"
-                    android:minHeight="0dp"
-                    android:padding="0dp"
-                    app:cornerRadius="12dp"
-                    app:icon="@drawable/ic_gomme"
-                    app:iconGravity="textStart"
-                    app:iconPadding="0dp"
-                    app:iconSize="34dp"
-                    app:iconTint="#FFFFFF" />
-            </LinearLayout>
-
-            <!-- Bouton du bas -->
-            <Button
-                android:id="@+id/btn_clear"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginTop="6dp"
-                android:backgroundTint="#E53935"
-                android:elevation="6dp"
-                android:fontFamily="sans-serif-black"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:letterSpacing="0.05"
-                android:minHeight="0dp"
-                android:onClick="clear_bets"
-                android:text="Tout effacer"
-                android:textColor="#FFFFFF"
-                app:cornerRadius="12dp" />
-        </LinearLayout>
-
+        <!-- colonne gauche avec btns annuler, gomme, tt effacer -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:paddingHorizontal="16dp">
 
+            <!-- ligne invisible au milieu du layout pour placer les boutons -->
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guide_mid"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.5" />
+
+            <!-- Ligne du haut (Annuler + Gomme) -->
+            <Button
+                android:id="@+id/btn_undo"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_marginEnd="6dp"
+                android:layout_marginBottom="3dp"
+                android:backgroundTint="#E53935"
+                android:elevation="6dp"
+                android:fontFamily="sans-serif-black"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:letterSpacing="0.05"
+                android:maxLines="1"
+                android:minHeight="0dp"
+                android:onClick="undo_bet"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="0dp"
+                android:text="Annuler"
+                android:textColor="#FFFFFF"
+                app:autoSizeMaxTextSize="18sp"
+                app:autoSizeMinTextSize="8sp"
+                app:autoSizeStepGranularity="1sp"
+                app:autoSizeTextType="uniform"
+                app:cornerRadius="12dp"
+                app:layout_constraintBottom_toTopOf="@id/guide_mid"
+                app:layout_constraintEnd_toStartOf="@id/btn_gomme"
+                app:layout_constraintHeight_max="@dimen/btn_h_max"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="1" />
+
+            <!-- bouton gomme carré dc largeur = hauteur = hauteur btn annuler -->
+            <Button
+                android:id="@+id/btn_gomme"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:backgroundTint="#E53935"
+                android:elevation="6dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:padding="0dp"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_gomme"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconSize="24dp"
+                app:iconTint="#FFFFFF"
+                app:layout_constraintBottom_toBottomOf="@id/btn_undo"
+                app:layout_constraintDimensionRatio="W,1:1"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/btn_undo" />
+
+            <!-- Bouton du bas -->
+            <Button
+                android:id="@+id/btn_clear"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_marginTop="3dp"
+                android:backgroundTint="#E53935"
+                android:elevation="6dp"
+                android:fontFamily="sans-serif-black"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:letterSpacing="0.05"
+                android:maxLines="1"
+                android:minHeight="0dp"
+                android:onClick="clear_bets"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="0dp"
+                android:text="Tout effacer"
+                android:textColor="#FFFFFF"
+                app:autoSizeMaxTextSize="18sp"
+                app:autoSizeMinTextSize="8sp"
+                app:autoSizeStepGranularity="1sp"
+                app:autoSizeTextType="uniform"
+                app:cornerRadius="12dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHeight_max="@dimen/btn_h_max"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/guide_mid"
+                app:layout_constraintVertical_bias="0" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- colonne de droite avec btn play et value jeton -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:paddingHorizontal="16dp">
+
+            <!-- ligne invisible a 60% du layout pour bouton play qui prend plus de place que la valeur de jeotn-->
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guide_play"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.6" />
+
             <Button
                 android:id="@+id/button_total_bet"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                app:layout_constraintDimensionRatio="2:1"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toTopOf="@+id/txt_chip"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintVertical_chainStyle="packed"
                 android:backgroundTint="#F3C300"
-                app:cornerRadius="16dp"
                 android:elevation="8dp"
-                android:onClick="start_roulette"
                 android:fontFamily="sans-serif-black"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
                 android:letterSpacing="0.05"
+                android:maxLines="2"
+                android:minHeight="0dp"
+                android:onClick="start_roulette"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="2dp"
                 android:text="PLAY"
                 android:textColor="#1A1A1A"
-                android:textSize="16sp"/>
+                app:autoSizeMaxTextSize="22sp"
+                app:autoSizeMinTextSize="8sp"
+                app:autoSizeStepGranularity="1sp"
+                app:autoSizeTextType="uniform"
+                app:cornerRadius="16dp"
+                app:layout_constraintBottom_toTopOf="@id/guide_play"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHeight_max="@dimen/play_h_max"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="1" />
 
+            <!-- valeur jeton + bouton pour valeur perso de jeton -->
             <TextView
                 android:id="@+id/txt_chip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
                 android:fontFamily="sans-serif-black"
                 android:letterSpacing="0.05"
                 android:text="Jeton : aucun"
@@ -166,7 +215,7 @@
                 app:layout_constraintEnd_toStartOf="@+id/btn_edit_chip"
                 app:layout_constraintHorizontal_chainStyle="packed"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/button_total_bet" />
+                app:layout_constraintTop_toBottomOf="@id/guide_play" />
 
             <ImageButton
                 android:id="@+id/btn_edit_chip"
@@ -183,10 +232,10 @@
                 app:layout_constraintStart_toEndOf="@+id/txt_chip"
                 app:layout_constraintTop_toTopOf="@+id/txt_chip"
                 app:tint="#C9A227" />
-
         </androidx.constraintlayout.widget.ConstraintLayout>
-
     </LinearLayout>
+
+
     <!-- zone bot -->
 
     <LinearLayout

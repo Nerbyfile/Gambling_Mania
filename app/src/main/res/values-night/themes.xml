@@ -3,5 +3,6 @@
     <style name="Base.Theme.My_Application_Sandbox" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your dark theme here. -->
         <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <item name="materialAlertDialogTheme">@style/Casino.Dialog</item>
     </style>
 </resources>

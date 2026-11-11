@@ -41,7 +41,9 @@ import com.example.my_application_sandbox.RouletteTouchHelper.Kind;
 import com.example.my_application_sandbox.RouletteTouchHelper.Zone;
 import com.example.my_application_sandbox.SalonRepository.TableState;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
+import java.text.NumberFormat;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +68,7 @@ public class Roulette_activity extends AppCompatActivity {
 
     private Button btnGomme;
     private boolean gommeActive = false;
+    private boolean gommeGesture = false;
 
     // ---- Multijoueur (table d'un salon) ----
     private String salonId = null;                       // null = partie solo
@@ -78,6 +81,8 @@ public class Roulette_activity extends AppCompatActivity {
     private int settledRound = -1;                       // dernier tour réglé
     private int betsRound = -1;                          // tour où j'ai posé mes jetons
     private boolean bettingOpen = true;
+
+    private final NumberFormat format = NumberFormat.getIntegerInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -208,9 +213,11 @@ public class Roulette_activity extends AppCompatActivity {
 
         grid.setOnTouchListener((v, event) -> {
 
-            // Mode gomme : un appui (ou un glissé) sur une pile de jetons la supprime
-            if (gommeActive) {
-                int a = event.getActionMasked();
+            int a = event.getActionMasked();
+            if (a == MotionEvent.ACTION_DOWN) gommeGesture = gommeActive;   // on fige le mode
+
+            // Mode gomme pour supprimer pile de jeton
+            if (gommeGesture) {
                 if (a == MotionEvent.ACTION_DOWN || a == MotionEvent.ACTION_MOVE) {
                     Bet cible = chipOverlay.betAt(event.getX(), event.getY());
                     if (cible != null && (salonId == null || bettingOpen)) {
@@ -220,6 +227,9 @@ public class Roulette_activity extends AppCompatActivity {
                     }
                 } else if (a == MotionEvent.ACTION_UP) {
                     v.performClick();
+                }
+                if (a == MotionEvent.ACTION_UP || a == MotionEvent.ACTION_CANCEL) {
+                    gommeGesture = false;
                 }
                 return true;
             }
@@ -355,6 +365,9 @@ public class Roulette_activity extends AppCompatActivity {
         }
 
         EditText input = new EditText(this);
+        input.setTextColor(0xFFFFFFFF);
+        input.setHintTextColor(0x99FFFFFF);
+        input.setBackgroundTintList(ColorStateList.valueOf(0xFFC9A227));
         input.setInputType(InputType.TYPE_CLASS_NUMBER);
         input.setFilters(new InputFilter[]{ new InputFilter.LengthFilter(9) });   // limiter val max
         input.setImeOptions(EditorInfo.IME_ACTION_DONE);   // la touche v du clavier valide
@@ -372,7 +385,7 @@ public class Roulette_activity extends AppCompatActivity {
         lp.setMargins(m, m / 2, m, 0);
         box.addView(input, lp);
 
-        AlertDialog dialog = new AlertDialog.Builder(this)
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setTitle("Valeur du jeton")
                 .setMessage("Entre le montant à miser à chaque pari.")
                 .setView(box)
@@ -388,7 +401,13 @@ public class Roulette_activity extends AppCompatActivity {
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             if (imm != null) imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
         });
+        dialog.getWindow().setDimAmount(0.75f);
         dialog.show();
+
+        //modif bouton ok du clavier
+        Button ok = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        ok.setBackgroundTintList(ColorStateList.valueOf(0xFFC9A227));
+        ok.setTextColor(0xFF0A0A0A);
 
         // la touche v du clavier valide
         input.setOnEditorActionListener((tv, actionId, ev) -> {
@@ -444,7 +463,7 @@ public class Roulette_activity extends AppCompatActivity {
             styleGomme();
         }
 
-        txtBank.setText("Solde : " + player.getBank());
+        txtBank.setText(format.format(Player.current().getBank()));
 
         // Titre du bouton PLAY : "PLAY" en solo, phase et compte à rebours en multijoueur
         String titre = "PLAY";

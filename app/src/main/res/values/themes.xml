@@ -2,8 +2,23 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.My_Application_Sandbox" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
+        <item name="materialAlertDialogTheme">@style/Casino.Dialog</item>
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
     </style>
 
     <style name="Theme.My_Application_Sandbox" parent="Base.Theme.My_Application_Sandbox" />
+
+    <!-- styles custom pour popup -->
+    <style name="Casino.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorSurface">#0F2E1A</item>
+        <item name="colorOnSurface">#FFFFFF</item>
+        <item name="colorOnSurfaceVariant">#F5D78A</item>
+        <item name="colorPrimary">#C9A227</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/Casino.DialogTitle</item>
+    </style>
+    <style name="Casino.DialogTitle" parent="MaterialAlertDialog.Material3.Title.Text">
+        <item name="android:textColor">#C9A227</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
 </resources>

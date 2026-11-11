@@ -2,4 +2,7 @@
 <resources>
     <!-- hauteur d'une ligne de la table : un seul endroit a regler -->
     <dimen name="cell_h">40dp</dimen>
+    <!-- hauteur max des boutons roulette -->
+    <dimen name="btn_h_max">56dp</dimen>
+    <dimen name="play_h_max">76dp</dimen>
 </resources>
