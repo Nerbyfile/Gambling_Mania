@@ -1,25 +1,32 @@
 package com.example.my_application_sandbox;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.InputFilter;
+import android.text.InputType;
+import android.text.TextWatcher;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.SystemBarStyle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.my_application_sandbox.SalonRepository.Salon;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,12 +36,11 @@ import java.util.Locale;
 public class SalonList_activity extends AppCompatActivity {
 
     private Player me;
-    private EditText editName, editCode;
-    private CheckBox checkPrivate;
-    private Button btnCreate, btnJoin;
-    private final List<Salon> salons = new ArrayList<>();
-    private final List<String> labels = new ArrayList<>();
-    private ArrayAdapter<String> adapter;
+    private Button btnCreate;
+    private EditText editSearch;
+    private final List<Salon> allSalons = new ArrayList<>();
+    private final List<Salon> shown = new ArrayList<>();
+    private SalonAdapter adapter;
 
     private final SalonRepository.Callback<Salon> openCallback = new SalonRepository.Callback<Salon>() {
         @Override public void onSuccess(Salon s) {
@@ -50,12 +56,23 @@ public class SalonList_activity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
+
+        EdgeToEdge.enable(this, SystemBarStyle.dark(Color.TRANSPARENT));
         setContentView(R.layout.activity_salon_list);
+
+        // Barres système : le fond vert passe dessous, le salon reste dans la zone visible
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            int pad = (int) (16 * getResources().getDisplayMetrics().density);
-            v.setPadding(bars.left + pad, bars.top + pad, bars.right + pad, bars.bottom + pad);
+
+            // Haut : la barre foncée s'étend sous la barre d'état
+            View topBar = findViewById(R.id.topBar);
+            int h = (int) (56 * getResources().getDisplayMetrics().density);
+            topBar.setPadding(topBar.getPaddingLeft(), bars.top, topBar.getPaddingRight(), 0);
+            topBar.getLayoutParams().height = h + bars.top;
+            topBar.requestLayout();
+
+            // Côtés et bas : le vert passe sous la barre de navigation
+            v.setPadding(bars.left, 0, bars.right, bars.bottom);
             return insets;
         });
 
@@ -66,45 +83,28 @@ public class SalonList_activity extends AppCompatActivity {
             return;
         }
 
-        editName = findViewById(R.id.edit_salon_name);
-        editCode = findViewById(R.id.edit_code);
-        checkPrivate = findViewById(R.id.check_private);
         btnCreate = findViewById(R.id.btn_create_salon);
-        btnJoin = findViewById(R.id.btn_join_code);
+        editSearch = findViewById(R.id.edit_search);
 
-        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, labels) {
-            @Override public View getView(int position, View convertView, ViewGroup parent) {
-                View v = super.getView(position, convertView, parent);
-                ((TextView) v).setTextColor(Color.WHITE);
-                return v;
-            }
-        };
+        adapter = new SalonAdapter();
         ListView list = findViewById(R.id.list_salons);
         list.setAdapter(adapter);
         list.setEmptyView(findViewById(R.id.txt_empty));
         list.setOnItemClickListener((p, v, pos, id) -> {
             setBusy(true);
-            SalonRepository.joinById(salons.get(pos).getId(), me, openCallback);
+            SalonRepository.joinById(shown.get(pos).getId(), me, openCallback);
         });
 
-        btnCreate.setOnClickListener(v -> {
-            String name = editName.getText().toString().trim();
-            if (name.isEmpty()) name = "Salon de " + me.getName();
-            setBusy(true);
-            SalonRepository.createSalon(me, name, checkPrivate.isChecked(), openCallback);
+        editSearch.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) { }
+            @Override public void onTextChanged(CharSequence s, int a, int b, int c) { }
+            @Override public void afterTextChanged(Editable s) { applyFilter(); }
         });
 
-        btnJoin.setOnClickListener(v -> {
-            String code = editCode.getText().toString().trim().toUpperCase(Locale.ROOT);
-            if (code.length() != 5) {
-                editCode.setError("Le code fait 5 caractères");
-                return;
-            }
-            setBusy(true);
-            SalonRepository.joinByCode(code, me, openCallback);
-        });
-
-        findViewById(R.id.btn_refresh).setOnClickListener(v -> refresh());
+        findViewById(R.id.btnHome).setOnClickListener(v -> finish());
+        btnCreate.setOnClickListener(v ->
+                startActivity(new Intent(this, CreateSalonActivity.class)));   // Multi 2
+        findViewById(R.id.btn_join_code).setOnClickListener(v -> askCode());
     }
 
     @Override
@@ -116,16 +116,50 @@ public class SalonList_activity extends AppCompatActivity {
     private void refresh() {
         SalonRepository.listPublicSalons(new SalonRepository.Callback<List<Salon>>() {
             @Override public void onSuccess(List<Salon> result) {
-                salons.clear();
-                salons.addAll(result);
-                labels.clear();
-                for (Salon s : result) labels.add(s.getName() + "   ·   " + s.getMemberCount() + " joueur(s)");
-                adapter.notifyDataSetChanged();
+                allSalons.clear();
+                allSalons.addAll(result);
+                applyFilter();
             }
-            @Override public void onError(Exception e) {
-                toast("Impossible de charger les salons");
-            }
+            @Override public void onError(Exception e) { toast("Impossible de charger les salons"); }
         });
+    }
+
+    private void applyFilter() {
+        String q = editSearch.getText().toString().trim().toLowerCase(Locale.ROOT);
+        shown.clear();
+        for (Salon s : allSalons) {
+            String n = s.getName() != null ? s.getName().toLowerCase(Locale.ROOT) : "";
+            if (q.isEmpty() || n.contains(q)) shown.add(s);
+        }
+        adapter.notifyDataSetChanged();
+    }
+
+    private void askCode() {
+        EditText input = new EditText(this);
+        input.setHint("CODE");
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
+        input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(5)});
+        input.setSingleLine(true);
+        input.setTextColor(Color.WHITE);
+        input.setHintTextColor(0x99FFFFFF);
+        input.setBackgroundTintList(ColorStateList.valueOf(0xFFC9A227));
+
+        FrameLayout box = new FrameLayout(this);
+        int pad = (int) (24 * getResources().getDisplayMetrics().density);
+        box.setPadding(pad, pad / 2, pad, 0);
+        box.addView(input);
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Rejoindre par code")
+                .setView(box)
+                .setPositiveButton("Rejoindre", (d, w) -> {
+                    String code = input.getText().toString().trim().toUpperCase(Locale.ROOT);
+                    if (code.length() != 5) { toast("Le code fait 5 caractères"); return; }
+                    setBusy(true);
+                    SalonRepository.joinByCode(code, me, openCallback);
+                })
+                .setNegativeButton("Annuler", null)
+                .show();
     }
 
     private void open(Salon s) {
@@ -138,10 +172,25 @@ public class SalonList_activity extends AppCompatActivity {
 
     private void setBusy(boolean busy) {
         btnCreate.setEnabled(!busy);
-        btnJoin.setEnabled(!busy);
     }
 
     private void toast(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+    }
+
+    /** Une ligne = une carte avec le nom du salon, l'hôte et la flèche. */
+    private class SalonAdapter extends ArrayAdapter<Salon> {
+        SalonAdapter() { super(SalonList_activity.this, 0, shown); }
+
+        @Override
+        public View getView(int pos, View cv, ViewGroup parent) {
+            if (cv == null) cv = getLayoutInflater().inflate(R.layout.item_salon, parent, false);
+            Salon s = getItem(pos);
+            String host = s.getOwnerName() != null ? s.getOwnerName() : "inconnu";
+            ((TextView) cv.findViewById(R.id.txt_salon_name)).setText(s.getName());
+            ((TextView) cv.findViewById(R.id.txt_salon_host))
+                    .setText("Hôte : " + host + "  ·  " + s.getMemberCount() + " joueur(s)");
+            return cv;
+        }
     }
 }

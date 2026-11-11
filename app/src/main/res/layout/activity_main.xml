@@ -1,51 +1,136 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:visibility="visible">
+    android:background="#0B3D0B"
+    android:orientation="vertical">
+
+    <!-- barre du haut -->
+    <LinearLayout
+        android:id="@+id/topBar"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="#0F2E1A"
+        android:elevation="6dp"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:id="@+id/btn_params"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:onClick="comingSoon"
+            android:orientation="vertical">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_param" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Params" android:textColor="#F5D78A" android:textSize="11sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/btn_profile"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:onClick="comingSoon"
+            android:orientation="vertical">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_profile" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Profil" android:textColor="#F5D78A" android:textSize="11sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/btn_friends"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:onClick="comingSoon"
+            android:orientation="vertical">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_amis" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Friends" android:textColor="#F5D78A" android:textSize="11sp" />
+        </LinearLayout>
+    </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/list_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.5">
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <Space android:layout_width="match_parent" android:layout_height="0dp"
+            android:layout_weight="1" />
 
         <TextView
             android:id="@+id/Title"
-            android:layout_width="147dp"
-            android:layout_height="28dp"
-            android:text="Gabling mania"
-            android:textAppearance="@style/TextAppearance.AppCompat.Large" />
-
-        <Space
-            android:layout_width="match_parent"
-            android:layout_height="49dp" />
-
-        <Button
-            android:id="@+id/start_roulette"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:onClick="enterSalon"
-            android:text="@string/salon" />
+            android:fontFamily="sans-serif-black"
+            android:gravity="center"
+            android:letterSpacing="0.08"
+            android:text="GAMBLING\nMANIA"
+            android:textColor="#F5D78A"
+            android:textSize="38sp" />
 
-        <Space
-            android:layout_width="match_parent"
-            android:layout_height="19dp" />
+        <View android:layout_width="80dp" android:layout_height="3dp"
+            android:layout_marginTop="14dp" android:background="#C9A227" />
 
+        <Space android:layout_width="match_parent" android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- bouton solo -->
         <Button
-            android:id="@+id/start_parametre"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/parameter_window" />
+            android:id="@+id/btn_solo"
+            android:layout_width="280dp"
+            android:layout_height="72dp"
+            android:backgroundTint="#C9A227"
+            android:elevation="6dp"
+            android:fontFamily="sans-serif-black"
+            android:letterSpacing="0.08"
+            android:onClick="playSolo"
+            android:text="SOLO"
+            android:textAllCaps="true"
+            android:textColor="#0A0A0A"
+            android:textSize="22sp"
+            app:cornerRadius="16dp" />
+
+        <Space android:layout_width="match_parent" android:layout_height="16dp" />
+
+        <!-- bouton multi-->
+        <Button
+            android:id="@+id/btn_multi"
+            android:layout_width="280dp"
+            android:layout_height="72dp"
+            android:backgroundTint="#0F2E1A"
+            android:fontFamily="sans-serif-black"
+            android:letterSpacing="0.08"
+            android:onClick="playMulti"
+            android:text="MULTI"
+            android:textAllCaps="true"
+            android:textColor="#F5D78A"
+            android:textSize="22sp"
+            app:cornerRadius="16dp"
+            app:strokeColor="#C9A227"
+            app:strokeWidth="2dp" />
+
+        <Space android:layout_width="match_parent" android:layout_height="0dp"
+            android:layout_weight="1" />
     </LinearLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

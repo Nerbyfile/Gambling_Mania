@@ -51,7 +51,7 @@ public final class SalonRepository {
         public static final String PUBLIC = "PUBLIC";
         public static final String PRIVATE = "PRIVATE";
 
-        private String id, name, code, visibility, ownerId;
+        private String id, name, code, visibility, ownerId,ownerName;
         private int memberCount;
         private long lastActive, createdAt;
 
@@ -72,6 +72,8 @@ public final class SalonRepository {
         public void setLastActive(long lastActive) { this.lastActive = lastActive; }
         public long getCreatedAt() { return createdAt; }
         public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
+        public String getOwnerName() { return ownerName; }
+        public void setOwnerName(String ownerName) { this.ownerName = ownerName; }
     }
 
     public static class SalonMember {
@@ -217,6 +219,7 @@ public final class SalonRepository {
                     s.setCode(code);
                     s.setVisibility(isPrivate ? Salon.PRIVATE : Salon.PUBLIC);
                     s.setOwnerId(owner.getId());
+                    s.setOwnerName(owner.getName());
                     s.setMemberCount(1);
                     s.setLastActive(now);
                     s.setCreatedAt(now);

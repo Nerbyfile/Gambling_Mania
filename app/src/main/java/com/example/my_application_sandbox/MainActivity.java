@@ -1,11 +1,13 @@
 package com.example.my_application_sandbox;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
-import androidx.appcompat.app.AlertDialog;
+import androidx.activity.SystemBarStyle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -44,26 +46,31 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
-        EdgeToEdge.enable(this);
+        EdgeToEdge.enable(this, SystemBarStyle.dark(Color.TRANSPARENT));
         setContentView(R.layout.activity_main);
+
+        // Barres système : le fond vert passe dessous, la page reste dans la zone visible
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+
+            // Haut : la barre foncée s'étend sous la barre d'état
+            View topBar = findViewById(R.id.topBar);
+            int h = (int) (56 * getResources().getDisplayMetrics().density);
+            topBar.setPadding(topBar.getPaddingLeft(), bars.top, topBar.getPaddingRight(), 0);
+            topBar.getLayoutParams().height = h + bars.top;
+            topBar.requestLayout();
+
+            // Côtés et bas : le vert passe sous la barre de navigation
+            v.setPadding(bars.left, 0, bars.right, bars.bottom);
             return insets;
         });
     }
 
     /** Solo : le salon habituel. Multijoueur : la liste des salons. */
-    public void enterSalon(View view) {
-        new AlertDialog.Builder(this)
-                .setTitle("Jouer")
-                .setItems(new CharSequence[]{"Jouer seul", "Salons multijoueur"}, (d, which) -> {
-                    if (which == 0) {
-                        startActivity(new Intent(this, Salon_activity.class));
-                    } else {
-                        startActivity(new Intent(this, SalonList_activity.class));
-                    }
-                })
-                .show();
+    public void playSolo(View v)  { startActivity(new Intent(this, Salon_activity.class)); }
+    public void playMulti(View v) { startActivity(new Intent(this, SalonList_activity.class)); }
+
+    public void comingSoon(View v) {
+        Toast.makeText(this, "Bientôt disponible", Toast.LENGTH_SHORT).show();
     }
 }
