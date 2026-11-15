@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import com.google.android.material.imageview.ShapeableImageView;
 
 public class Account_activity extends AppCompatActivity {
 
@@ -26,6 +27,9 @@ public class Account_activity extends AppCompatActivity {
     private EditText editName;
     private EditText editPin;
     private Button btnCreate;
+
+    private ShapeableImageView imgAvatar;
+    private int avatarId = 0;   // avatar choisi
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +47,15 @@ public class Account_activity extends AppCompatActivity {
         editName = findViewById(R.id.edit_name);
         editPin = findViewById(R.id.edit_pin);
         btnCreate = findViewById(R.id.btn_create);
+        imgAvatar = findViewById(R.id.img_avatar);
+        imgAvatar.setImageResource(Avatar.res(avatarId));
+
+        //select de la pp
+        findViewById(R.id.avatar_zone).setOnClickListener(zone ->
+                AvatarPicker.show(this, avatarId, id -> {
+                    avatarId = id;
+                    imgAvatar.setImageResource(Avatar.res(id));
+                }));
 
         btnCreate.setOnClickListener(v -> createAccount());
         editPin.setOnEditorActionListener((v, actionId, event) -> {
@@ -81,7 +94,7 @@ public class Account_activity extends AppCompatActivity {
 
         btnCreate.setEnabled(false);   // évite les doubles envois pendant la requête
 
-        PlayerRepository.createOrGet(name, pin, new PlayerRepository.AccountCallback() {
+        PlayerRepository.createOrGet(name, pin, avatarId, new PlayerRepository.AccountCallback() {
             @Override
             public void onResult(Player player, boolean created) {
                 failedAttempts = 0;
@@ -118,4 +131,6 @@ public class Account_activity extends AppCompatActivity {
             }
         });
     }
+
+
 }

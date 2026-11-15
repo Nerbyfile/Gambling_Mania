@@ -16,6 +16,11 @@ public class Player {
     private int bank;
     private long createdAt;    // epoch ms
 
+    private int avatarId;   // 0 à 7 (0 par défaut, y compris pour les anciens comptes)
+
+    public int getAvatarId() { return avatarId; }
+    public void setAvatarId(int avatarId) { this.avatarId = avatarId; }
+
     /** Constructeur sans argument : requis par Firestore (toObject). */
     public Player() { }
 

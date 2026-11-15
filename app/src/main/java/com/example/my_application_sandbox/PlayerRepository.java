@@ -37,7 +37,7 @@ public final class PlayerRepository {
     }
 
     /** Récupère le joueur portant ce pseudo (si le PIN est bon), ou le crée avec un id aléatoire unique. */
-    public static void createOrGet(String name, String pin, AccountCallback cb) {
+    public static void createOrGet(String name, String pin, int avatarId, AccountCallback cb) {
         String nameLower = name.toLowerCase(Locale.ROOT);
 
         players().whereEqualTo("nameLower", nameLower).limit(1).get()
@@ -66,6 +66,7 @@ public final class PlayerRepository {
                         // Nouveau compte : id aléatoire unique généré par Firestore
                         DocumentReference ref = players().document();
                         Player p = Player.create(name, START_BANK);
+                        p.setAvatarId(avatarId);
                         p.setId(ref.getId());
 
                         String salt = PinHasher.newSalt();
@@ -122,5 +123,11 @@ public final class PlayerRepository {
     public static void updateBank(Player p) {
         if (p.getId() == null) return;
         players().document(p.getId()).update("bank", p.getBank());
+    }
+
+    /** Changer sa pp */
+    public static void updateAvatar(Player p) {
+        if (p.getId() == null) return;
+        players().document(p.getId()).update("avatarId", p.getAvatarId());
     }
 }

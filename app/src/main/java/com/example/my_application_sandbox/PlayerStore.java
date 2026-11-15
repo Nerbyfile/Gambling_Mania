@@ -11,6 +11,7 @@ public final class PlayerStore {
     private static final String K_NAME = "name";
     private static final String K_BANK = "bank";
     private static final String K_CREATED = "created_at";
+    private static final String K_AVATAR = "avatar_id";
 
     private PlayerStore() { }
 
@@ -27,11 +28,12 @@ public final class PlayerStore {
         p.setName(sp.getString(K_NAME, "Joueur"));
         p.setBank(sp.getInt(K_BANK, 0));
         p.setCreatedAt(sp.getLong(K_CREATED, 0L));
+        p.setAvatarId(sp.getInt(K_AVATAR, 0));
         return p;
     }
 
     public static void save(Context ctx, Player p) {
-        prefs(ctx).edit()
+        prefs(ctx).edit().putInt(K_AVATAR, p.getAvatarId())
                 .putString(K_ID, p.getId())
                 .putString(K_NAME, p.getName())
                 .putInt(K_BANK, p.getBank())

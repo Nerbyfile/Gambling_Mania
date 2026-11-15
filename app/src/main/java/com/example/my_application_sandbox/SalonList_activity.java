@@ -1,5 +1,6 @@
 package com.example.my_application_sandbox;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
@@ -10,6 +11,9 @@ import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -24,6 +28,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.appcompat.app.AlertDialog;
 
 import com.example.my_application_sandbox.SalonRepository.Salon;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -149,7 +154,7 @@ public class SalonList_activity extends AppCompatActivity {
         box.setPadding(pad, pad / 2, pad, 0);
         box.addView(input);
 
-        new MaterialAlertDialogBuilder(this)
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setTitle("Rejoindre par code")
                 .setView(box)
                 .setPositiveButton("Rejoindre", (d, w) -> {
@@ -159,7 +164,26 @@ public class SalonList_activity extends AppCompatActivity {
                     SalonRepository.joinByCode(code, me, openCallback);
                 })
                 .setNegativeButton("Annuler", null)
-                .show();
+                .create();
+
+        // le clavier s'ouvre tout seul, le curseur est déjà dans le champ
+        dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        dialog.setOnShowListener(d -> {
+            input.requestFocus();
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
+        });
+        dialog.getWindow().setDimAmount(0.75f);
+        dialog.show();
+
+        // la touche v du clavier valide
+        input.setOnEditorActionListener((tv, actionId, ev) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+                return true;
+            }
+            return false;
+        });
     }
 
     private void open(Salon s) {

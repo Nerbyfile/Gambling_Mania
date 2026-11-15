@@ -1,67 +1,133 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#0B3D0B"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="32dp">
+    android:clipToPadding="false"
+    android:fillViewport="true">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Bienvenue au casino"
-        android:textColor="#FFFFFF"
-        android:textSize="28sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Crée ton compte pour commencer à jouer"
-        android:textColor="#C9A227"
-        android:textSize="16sp" />
-
-    <EditText
-        android:id="@+id/edit_name"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:hint="Pseudo"
-        android:imeOptions="actionDone"
-        android:inputType="textPersonName"
-        android:maxLength="16"
-        android:singleLine="true"
-        android:textColor="#FFFFFF"
-        android:textColorHint="#9FBF9F" />
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="30dp">
 
-    <EditText
-        android:id="@+id/edit_pin"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:hint="Code PIN (4 chiffres)"
-        android:imeOptions="actionDone"
-        android:inputType="numberPassword"
-        android:maxLength="4"
-        android:singleLine="true"
-        android:textColor="#FFFFFF"
-        android:textColorHint="#9FBF9F" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-black"
+            android:gravity="center"
+            android:letterSpacing="0.08"
+            android:text="GAMBLING\nMANIA"
+            android:textColor="#F5D78A"
+            android:textSize="34sp" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="Tu démarres avec 1000 jetons"
-        android:textColor="#FFFFFF"
-        android:textSize="14sp" />
+        <View
+            android:layout_width="80dp"
+            android:layout_height="3dp"
+            android:layout_marginTop="12dp"
+            android:background="#C9A227" />
 
-    <Button
-        android:id="@+id/btn_create"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="Créer mon compte" />
-</LinearLayout>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Crée ton compte pour commencer à jouer"
+            android:textColor="#9FBF9F"
+            android:textSize="14sp" />
+
+        <!-- avatar : on touche pour en choisir un autre -->
+        <FrameLayout
+            android:id="@+id/avatar_zone"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_marginTop="28dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/img_avatar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/avatar_1"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.Circle"
+                app:strokeColor="#C9A227"
+                app:strokeWidth="3dp" />
+
+            <TextView
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_gravity="bottom|end"
+                android:background="@drawable/badge_gold"
+                android:gravity="center"
+                android:text="+"
+                android:textColor="#0A0A0A"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+        </FrameLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Choisis ton avatar"
+            android:textColor="#9FBF9F"
+            android:textSize="12sp" />
+
+        <EditText
+            android:id="@+id/edit_name"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/card_bg"
+            android:hint="Pseudo"
+            android:imeOptions="actionNext"
+            android:inputType="textPersonName"
+            android:maxLength="16"
+            android:paddingHorizontal="16dp"
+            android:singleLine="true"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#9FBF9F" />
+
+        <EditText
+            android:id="@+id/edit_pin"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/card_bg"
+            android:hint="Code PIN (4 chiffres)"
+            android:imeOptions="actionDone"
+            android:inputType="numberPassword"
+            android:maxLength="4"
+            android:paddingHorizontal="16dp"
+            android:singleLine="true"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#9FBF9F" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="Tu démarres avec 1000 jetons"
+            android:textColor="#F5D78A"
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/btn_create"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:layout_marginTop="24dp"
+            android:backgroundTint="#C9A227"
+            android:elevation="6dp"
+            android:fontFamily="sans-serif-black"
+            android:letterSpacing="0.05"
+            android:text="CRÉER MON COMPTE"
+            android:textColor="#0A0A0A"
+            android:textSize="18sp"
+            app:cornerRadius="16dp" />
+    </LinearLayout>
+</ScrollView>

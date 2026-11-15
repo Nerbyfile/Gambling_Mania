@@ -15,10 +15,15 @@
         <item name="colorOnSurfaceVariant">#F5D78A</item>
         <item name="colorPrimary">#C9A227</item>
         <item name="materialAlertDialogTitleTextStyle">@style/Casino.DialogTitle</item>
+        <item name="android:backgroundDimAmount">0.8</item>
     </style>
     <style name="Casino.DialogTitle" parent="MaterialAlertDialog.Material3.Title.Text">
         <item name="android:textColor">#C9A227</item>
         <item name="android:textStyle">bold</item>
+    </style>
+    <style name="ShapeAppearance.Circle" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
     </style>
 
 </resources>

@@ -3,15 +3,27 @@ package com.example.my_application_sandbox;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.SystemBarStyle;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
+import java.text.NumberFormat;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -73,4 +85,64 @@ public class MainActivity extends AppCompatActivity {
     public void comingSoon(View v) {
         Toast.makeText(this, "Bientôt disponible", Toast.LENGTH_SHORT).show();
     }
+
+    public void showProfile(View v) {
+        Player p = Player.current();
+        View view = getLayoutInflater().inflate(R.layout.profile_popup, null);
+
+        // avatar
+        ImageView imgAvatar = view.findViewById(R.id.img_profile_avatar);
+        imgAvatar.setImageResource(Avatar.res(p.getAvatarId()));
+
+        view.findViewById(R.id.avatar_edit_zone).setOnClickListener(zone ->
+                AvatarPicker.show(this, p.getAvatarId(), id -> {
+                    p.setAvatarId(id);                              // joueur en mémoire
+                    imgAvatar.setImageResource(Avatar.res(id)); // mise à jour immédiate dans la popup
+                    PlayerStore.save(this, p);                      // cache local
+                    PlayerRepository.updateAvatar(p);               // Firestore
+                }));
+
+        // Nom#id : le nom en crème, le #id plus petit et en gris-vert
+        String id = p.getId() != null ? p.getId() : "";
+        String tag = id.isEmpty() ? "" : "#" + id.substring(0, Math.min(4, id.length())).toUpperCase(Locale.ROOT);
+        SpannableString name = new SpannableString(p.getName() + tag);
+        int start = p.getName().length();
+        name.setSpan(new ForegroundColorSpan(0xFF9FBF9F), start, name.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        name.setSpan(new RelativeSizeSpan(0.7f), start, name.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ((TextView) view.findViewById(R.id.txt_profile_name)).setText(name);
+
+        // banque (même format que la roulette : 1 200)
+        ((TextView) view.findViewById(R.id.txt_profile_bank))
+                .setText(NumberFormat.getIntegerInstance().format(p.getBank()));
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this).setView(view).create();
+        view.findViewById(R.id.btn_logout).setOnClickListener(b -> {
+            dialog.dismiss();
+            confirmLogout();
+        });
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent); // la carte a son propre fond
+        dialog.show();
+        dialog.getWindow().setDimAmount(0.8f);
+    }
+
+    private void confirmLogout() {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Se déconnecter ?")
+                .setMessage("Tu pourras te reconnecter avec ton pseudo et ton code PIN.")
+                .setPositiveButton("Déconnexion", (d, w) -> logout())
+                .setNegativeButton("Annuler", null)
+                .show();
+    }
+
+    private void logout() {
+        PlayerRepository.updateBank(Player.current());   // sauvegarde le solde avant de partir
+        PlayerStore.clear(this);                         // efface le compte du cache local
+        Player.setCurrent(null);                         // oublie le joueur en mémoire
+
+        // retour à l'écran de compte, en vidant l'historique (le retour ne revient pas dans l'app)
+        Intent i = new Intent(this, Account_activity.class);
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(i);
+    }
+
 }

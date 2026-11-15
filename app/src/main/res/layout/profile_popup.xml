@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minWidth="280dp"
+    android:orientation="vertical">
+
+    <!-- carte du profil -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/card_bg"
+        android:orientation="vertical">
+
+        <!-- avatar + Nom#id -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="16dp">
+
+            <FrameLayout
+                android:id="@+id/avatar_edit_zone"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/img_profile_avatar"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_gravity="top|start"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/avatar_1"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearance.Circle"
+                    app:strokeColor="#C9A227"
+                    app:strokeWidth="2dp" />
+
+                <ImageView
+                    android:id="@+id/btn_edit_avatar"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_gravity="bottom|end"
+                    android:background="@drawable/badge_dark"
+                    android:contentDescription="Changer d'avatar"
+                    android:padding="5dp"
+                    android:src="@drawable/ic_crayon" />
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/txt_profile_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_weight="1"
+                android:autoSizeMaxTextSize="20sp"
+                android:autoSizeMinTextSize="12sp"
+                android:autoSizeTextType="uniform"
+                android:fontFamily="sans-serif-black"
+                android:maxLines="1"
+                android:textColor="#FFF3C4"
+                android:textSize="20sp" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="#55C9A227" />
+
+        <!-- banque -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-black"
+                android:letterSpacing="0.1"
+                android:text="BANQUE"
+                android:textColor="#C9A227"
+                android:textSize="12sp" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@drawable/ic_pieces" />
+
+                <TextView
+                    android:id="@+id/txt_profile_bank"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:fontFamily="sans-serif-black"
+                    android:textColor="#FFF3C4"
+                    android:textSize="28sp" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- bouton deconnexion -->
+    <Button
+        android:id="@+id/btn_logout"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="14dp"
+        android:backgroundTint="#B71C1C"
+        android:fontFamily="sans-serif-black"
+        android:letterSpacing="0.05"
+        android:text="SE DÉCONNECTER"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        app:cornerRadius="16dp" />
+</LinearLayout>

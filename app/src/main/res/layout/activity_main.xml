@@ -30,7 +30,7 @@
             <ImageView android:layout_width="24dp" android:layout_height="24dp"
                 android:src="@drawable/ic_param" />
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Params" android:textColor="#F5D78A" android:textSize="11sp" />
+                android:text="Paramètres" android:textColor="#F5D78A" android:textSize="11sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -42,7 +42,7 @@
             android:clickable="true"
             android:focusable="true"
             android:gravity="center"
-            android:onClick="comingSoon"
+            android:onClick="showProfile"
             android:orientation="vertical">
             <ImageView android:layout_width="24dp" android:layout_height="24dp"
                 android:src="@drawable/ic_profile" />
@@ -64,7 +64,24 @@
             <ImageView android:layout_width="24dp" android:layout_height="24dp"
                 android:src="@drawable/ic_amis" />
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Friends" android:textColor="#F5D78A" android:textSize="11sp" />
+                android:text="Amis" android:textColor="#F5D78A" android:textSize="11sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/btn_mail"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:onClick="comingSoon"
+            android:orientation="vertical">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_mail" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Messages" android:textColor="#F5D78A" android:textSize="11sp" />
         </LinearLayout>
     </LinearLayout>
 

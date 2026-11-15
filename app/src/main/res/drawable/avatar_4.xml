@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="256dp" android:height="256dp"
+    android:viewportWidth="100" android:viewportHeight="100">
+    <path android:fillColor="#14213D" android:pathData="M0,0h100v100h-100z"/>
+    <!-- tête de pierre -->
+    <path android:fillColor="#8A8D91"
+        android:pathData="M24,22 H76 L82,30 V70 L74,80 H26 L18,70 V30 Z"/>
+    <!-- dessus plus clair -->
+    <path android:fillColor="#A9ADB2" android:pathData="M24,22 H76 L82,30 H18 Z"/>
+    <!-- côté droit dans l'ombre -->
+    <path android:fillColor="#6E7176" android:pathData="M74,24 L82,30 V70 L74,80 Z"/>
+    <!-- mousse -->
+    <path android:fillColor="#5E8C31"
+        android:pathData="M24,22 H46 Q42,29 36,27 Q31,34 24,31 Z"/>
+    <!-- sourcils en pierre -->
+    <path android:fillColor="#52565B"
+        android:pathData="M26,38 L46,44 L46,50 L26,44 Z M74,38 L54,44 L54,50 L74,44 Z"/>
+    <!-- yeux lumineux -->
+    <path android:fillColor="#FFB300"
+        android:pathData="M30,50 H44 V58 H30 Z M56,50 H70 V58 H56 Z"/>
+    <path android:fillColor="#FFE082"
+        android:pathData="M33,52 H41 V56 H33 Z M59,52 H67 V56 H59 Z"/>
+    <!-- nez -->
+    <path android:fillColor="#6E7176" android:pathData="M46,60 H54 V68 H46 Z"/>
+    <!-- bouche -->
+    <path android:fillColor="#2E2E2E" android:pathData="M34,70 H66 V77 H34 Z"/>
+    <path android:fillColor="#C9CCD0"
+        android:pathData="M38,70 H43 V74 H38 Z M48,70 H53 V74 H48 Z M58,70 H63 V74 H58 Z"/>
+    <!-- fissures -->
+    <path android:fillColor="#00000000" android:strokeColor="#4A4D52" android:strokeWidth="2"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M62,24 L58,32 L64,38 L60,45 M22,60 L28,64 L24,70"/>
+</vector>
