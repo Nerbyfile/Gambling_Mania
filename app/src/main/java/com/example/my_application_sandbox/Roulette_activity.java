@@ -28,6 +28,10 @@ import android.widget.GridLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.LinearLayout;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
+import android.view.Gravity;
+import android.widget.ImageButton;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.SystemBarStyle;
@@ -94,6 +98,12 @@ public class Roulette_activity extends AppCompatActivity {
     private LinearLayout playersList;      // non null seulement quand la popup est ouverte
 
     private Map<String, Integer> seatColors = new HashMap<>();   // id du joueur -> couleur
+
+    private View zonePlay, zoneHistory;
+    private ImageButton btnHistory;
+    private LinearLayout historyStrip;
+    private TextView txtHistoryStatus, txtHistoryEmpty;
+    private boolean historyShown = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -168,6 +178,7 @@ public class Roulette_activity extends AppCompatActivity {
         super.onResume();
         // au retour de la roue, le solde a changé
         if (player != null) refreshUi();
+        if (salonId == null) showHistory(RouletteHistory.solo());
     }
 
     @Override
@@ -183,6 +194,13 @@ public class Roulette_activity extends AppCompatActivity {
         txtTotalBet = findViewById(R.id.button_total_bet);
         txtChip = findViewById(R.id.txt_chip);
         btnGomme = findViewById(R.id.btn_gomme);
+        zonePlay         = findViewById(R.id.zone_play);
+        zoneHistory      = findViewById(R.id.zone_history);
+        historyStrip     = findViewById(R.id.history_strip);
+        txtHistoryStatus = findViewById(R.id.txt_history_status);
+        txtHistoryEmpty  = findViewById(R.id.txt_history_empty);
+        btnHistory       = findViewById(R.id.btn_history);
+        btnHistory.setOnClickListener(v -> toggleHistory());
 
         cells[0] = findViewById(R.id.leZ);
         for (int i = 1; i <= 36; i++) {
@@ -494,6 +512,8 @@ public class Roulette_activity extends AppCompatActivity {
             }
         }
 
+        txtHistoryStatus.setText(titre + "  ·  Mise : " + player.getTotalStake());
+
         //boutton de play split en 2 pour ecrire le haut plus gros que le bas
         String texteBouton = titre + "\nMise totale : " + player.getTotalStake();
         SpannableString spannable = new SpannableString(texteBouton);
@@ -504,6 +524,7 @@ public class Roulette_activity extends AppCompatActivity {
         if (gommeActive) txtChip.setText("Gomme active");
         else txtChip.setText(mise > 0 ? "Jeton : " + mise : "Jeton : aucun");
         chipOverlay.setBets(player.getBets());
+        if (spin != null) spin.getTable().setBets(player.getBets());
     }
 
     private void toast(String msg) {
@@ -542,6 +563,7 @@ public class Roulette_activity extends AppCompatActivity {
 
                     @Override public void onOthersBets(Map<String, List<Bet>> perPlayer) {
                         chipOverlay.setOtherBets(perPlayer);
+                        if (spin != null) spin.getTable().setOtherBets(perPlayer);
                     }
 
                     @Override public void onSeats(List<SalonMember> list) {
@@ -553,6 +575,7 @@ public class Roulette_activity extends AppCompatActivity {
                         Map<String, Integer> others = new HashMap<>(seatColors);
                         Integer mine = others.remove(myId);
                         chipOverlay.setColors(others, mine != null ? mine : 0);
+                        if (spin != null) spin.getTable().setColors(others, mine != null ? mine : 0);
 
                         ((TextView) findViewById(R.id.txt_players_count)).setText(String.valueOf(list.size()));
                         if (playersList != null) fillPlayers();   // popup ouverte : mise à jour
@@ -634,6 +657,7 @@ public class Roulette_activity extends AppCompatActivity {
                 spin.hide();
                 break;
         }
+        showHistory(t.getHistory());
         refreshUi();
     }
 
@@ -765,5 +789,44 @@ public class Roulette_activity extends AppCompatActivity {
             player.removeAllBets();                      // mises encore ouvertes ou table en pause : remboursées
         }
         session.leave();
+    }
+
+    /** Remplace la zone PLAY + jeton par l'historique (et inversement). Les paris restent possibles. */
+    private void toggleHistory() {
+        historyShown = !historyShown;
+        zonePlay.setVisibility(historyShown ? View.GONE : View.VISIBLE);
+        zoneHistory.setVisibility(historyShown ? View.VISIBLE : View.GONE);
+        btnHistory.setAlpha(historyShown ? 0.6f : 1f);       // bouton « enfoncé » quand ouvert
+        if (historyShown && salonId == null) showHistory(RouletteHistory.solo());
+        refreshUi();
+    }
+
+    /** Dessine les pastilles : plus récent à gauche, entouré d'or. */
+    private void showHistory(List<Integer> numbers) {
+        if (numbers == null) numbers = new ArrayList<>();
+        historyStrip.removeAllViews();
+        float dp = getResources().getDisplayMetrics().density;
+        int size = (int) (26 * dp);
+        for (int i = 0; i < numbers.size(); i++) {
+            int n = numbers.get(i);
+            TextView tv = new TextView(this);
+            tv.setText(String.valueOf(n));
+            tv.setGravity(Gravity.CENTER);
+            tv.setTextColor(Color.WHITE);
+            tv.setTextSize(12);
+            tv.setTypeface(null, Typeface.BOLD);
+
+            GradientDrawable bg = new GradientDrawable();
+            bg.setShape(GradientDrawable.OVAL);
+            bg.setColor(RouletteWheelView.colorOf(n));
+            if (i == 0) bg.setStroke((int) (2 * dp), 0xFFC9A227);   // dernier numéro : liseré or
+            else        bg.setStroke((int) dp, 0x66FFFFFF);          // visible aussi sur les noirs
+            tv.setBackground(bg);
+
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(size, size);
+            lp.setMarginEnd((int) (4 * dp));
+            historyStrip.addView(tv, lp);
+        }
+        txtHistoryEmpty.setVisibility(numbers.isEmpty() ? View.VISIBLE : View.GONE);
     }
 }

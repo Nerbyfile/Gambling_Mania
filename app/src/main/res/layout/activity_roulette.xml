@@ -30,6 +30,17 @@
             android:layout_height="0dp"
             android:layout_weight="1" />
 
+        <ImageButton
+            android:id="@+id/btn_history"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="14dp"
+            android:background="@drawable/pill_gold"
+            android:contentDescription="Historique des numéros"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_history" />
+
         <LinearLayout
             android:id="@+id/btn_players"
             android:layout_width="wrap_content"
@@ -189,11 +200,17 @@
                 app:layout_constraintVertical_bias="0" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- colonne de droite avec btn play et value jeton -->
-        <androidx.constraintlayout.widget.ConstraintLayout
+
+        <FrameLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"
+            android:layout_weight="1">
+
+        <!-- colonne de droite avec btn play et value jeton -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/zone_play"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:paddingHorizontal="16dp">
 
             <!-- ligne invisible a 60% du layout pour bouton play qui prend plus de place que la valeur de jeotn-->
@@ -266,8 +283,43 @@
                 app:layout_constraintTop_toTopOf="@+id/txt_chip"
                 app:tint="#C9A227" />
         </androidx.constraintlayout.widget.ConstraintLayout>
-    </LinearLayout>
 
+            <!-- zone historique, cachée par défaut -->
+            <LinearLayout
+                android:id="@+id/zone_history"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/txt_history_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:fontFamily="sans-serif-black"
+                    android:textColor="#C9A227"
+                    android:textSize="14sp" />
+
+                <LinearLayout
+                    android:id="@+id/history_strip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal" />
+
+                <TextView
+                    android:id="@+id/txt_history_empty"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Aucun tirage pour l'instant"
+                    android:textColor="#99FFFFFF"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </FrameLayout>
+    </LinearLayout>
 
     <!-- zone bot -->
 

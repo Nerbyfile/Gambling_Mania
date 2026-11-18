@@ -153,6 +153,8 @@ public final class SalonRepository {
         private int round;
         private int winningNumber = -1;
 
+        private List<Integer> history = new ArrayList<>();
+
         public TableState() { }
         public String getPhase() { return phase; }
         public void setPhase(String phase) { this.phase = phase; }
@@ -160,6 +162,9 @@ public final class SalonRepository {
         public void setRound(int round) { this.round = round; }
         public int getWinningNumber() { return winningNumber; }
         public void setWinningNumber(int winningNumber) { this.winningNumber = winningNumber; }
+
+        public List<Integer> getHistory() { return history != null ? history : new ArrayList<>(); }
+        public void setHistory(List<Integer> history) { this.history = history; }
     }
 
     public static class BetData {

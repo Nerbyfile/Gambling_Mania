@@ -258,9 +258,14 @@ public class RouletteTableSession {
                     SalonRepository.advance(salonId, round, phase, map("round", round + 1));
                 }
                 break;
-            case TableState.SPINNING:
-                SalonRepository.advance(salonId, round, phase, map("phase", TableState.RESULT));
+            case TableState.SPINNING: {
+                List<Integer> h = new ArrayList<>(table.getHistory());
+                h.add(0, table.getWinningNumber());
+                if (h.size() > RouletteHistory.MAX) h = new ArrayList<>(h.subList(0, RouletteHistory.MAX));
+                SalonRepository.advance(salonId, round, phase,
+                        map("phase", TableState.RESULT, "history", h));
                 break;
+            }
             case TableState.RESULT:
                 SalonRepository.advance(salonId, round, phase,
                         map("phase", TableState.BETTING, "round", round + 1, "winningNumber", -1));

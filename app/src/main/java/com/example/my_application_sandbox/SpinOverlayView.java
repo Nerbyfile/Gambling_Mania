@@ -24,6 +24,7 @@ public class SpinOverlayView extends FrameLayout {
     private final TextView txtResult;
     private final float dp;
     private AnimatorSet set;
+    private final MiniTableView table;
 
     public SpinOverlayView(Context c) {
         super(c);
@@ -48,7 +49,10 @@ public class SpinOverlayView extends FrameLayout {
         orbit.addView(ball, bp);
         box.addView(orbit, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 
-        addView(box, new LayoutParams(0, 0, Gravity.CENTER));
+        addView(box, new LayoutParams(0, 0, Gravity.TOP | Gravity.CENTER_HORIZONTAL));
+
+        table = new MiniTableView(c);
+        addView(table, new LayoutParams(0, 0, Gravity.TOP | Gravity.CENTER_HORIZONTAL));
 
         txtResult = new TextView(c);
         txtResult.setTextColor(0xFFFFFFFF);
@@ -64,10 +68,25 @@ public class SpinOverlayView extends FrameLayout {
 
     @Override
     protected void onMeasure(int widthSpec, int heightSpec) {
-        int size = (int) (Math.min(MeasureSpec.getSize(widthSpec), MeasureSpec.getSize(heightSpec)) * 0.85f);
+        int w = MeasureSpec.getSize(widthSpec);
+        int h = MeasureSpec.getSize(heightSpec);
+
+        int top = (int) (32 * dp);
+        int tableW = (int) Math.min(w * 0.94f, 560 * dp);
+        int tableH = Math.round(tableW * MiniTableView.ROWS / (float) MiniTableView.COLS);
+        LayoutParams tp = (LayoutParams) table.getLayoutParams();
+        tp.width = tableW;
+        tp.height = tableH;
+        tp.topMargin = top;
+
+        int areaTop = top + tableH + (int) (12 * dp);
+        int areaH = h - areaTop - (int) (72 * dp);
+        int size = (int) Math.max(Math.min(w * 0.85f, areaH), 120 * dp);
         LayoutParams lp = (LayoutParams) box.getLayoutParams();
         lp.width = size;
         lp.height = size;
+        lp.topMargin = areaTop + Math.max(0, (areaH - size) / 2);
+
         super.onMeasure(widthSpec, heightSpec);
     }
 
@@ -80,6 +99,7 @@ public class SpinOverlayView extends FrameLayout {
         cancel();
         txtResult.setVisibility(GONE);
         setVisibility(VISIBLE);
+        table.setWinning(-1);
         wheel.setRotation(0f);
         orbit.setRotation(0f);
         ball.setTranslationY(0f);
@@ -109,7 +129,9 @@ public class SpinOverlayView extends FrameLayout {
             boolean canceled = false;
             @Override public void onAnimationCancel(Animator animation) { canceled = true; }
             @Override public void onAnimationEnd(Animator animation) {
-                if (!canceled && onEnd != null) onEnd.run();
+                if (canceled) return;
+                table.setWinning(number);                    // entoure le numéro quand la balle s'arrête
+                if (onEnd != null) onEnd.run();
             }
         });
         set.start();
@@ -132,4 +154,6 @@ public class SpinOverlayView extends FrameLayout {
             set = null;
         }
     }
+
+    public MiniTableView getTable() { return table; }
 }

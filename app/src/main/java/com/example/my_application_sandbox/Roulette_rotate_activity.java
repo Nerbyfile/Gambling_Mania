@@ -36,6 +36,8 @@ public class Roulette_rotate_activity extends AppCompatActivity {
         View ballOrbit = findViewById(R.id.ball_orbit);
         View ball = findViewById(R.id.ball);
         Button btnSpin = findViewById(R.id.btn_spin);
+        MiniTableView miniTable = findViewById(R.id.mini_table);
+        miniTable.setBets(Roulette_player.getInstance().getBets());
 
         btnSpin.setOnClickListener(v -> {
             Roulette_player player = Roulette_player.getInstance();
@@ -44,6 +46,8 @@ public class Roulette_rotate_activity extends AppCompatActivity {
                 return;
             }
             btnSpin.setEnabled(false);
+
+            miniTable.setWinning(-1);
 
             int winning = new java.util.Random().nextInt(37);     // ! Non sécurisé & anticipable random extern nécéssaire
             float a = RouletteWheelView.angleOfNumber(winning); // 0..360
@@ -78,6 +82,9 @@ public class Roulette_rotate_activity extends AppCompatActivity {
                 @Override public void onAnimationEnd(Animator animation) {
                     btnSpin.setEnabled(true);
                     int payout = player.settle(winning);   // crédite les gains et vide les paris
+                    miniTable.setWinning(winning);               // entoure le numéro gagnant
+                    miniTable.setBets(player.getBets());         // les paris sont vidés par settle()
+                    RouletteHistory.addSolo(winning);
                     PlayerStore.save(btnSpin.getContext(), player.getPlayer());   // paris vidés : sûr de sauvegarder
                     PlayerRepository.updateBank(player.getPlayer());
                     String msg = "Numéro : " + winning

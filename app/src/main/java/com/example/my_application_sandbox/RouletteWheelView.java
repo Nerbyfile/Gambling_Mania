@@ -31,9 +31,13 @@ public class RouletteWheelView extends View {
         text.setFakeBoldText(true);
     }
 
-    private static boolean isRed(int n) {
+    public static boolean isRed(int n) {
         for (int r : RED) if (r == n) return true;
         return false;
+    }
+
+    public static int colorOf(int n) {
+        return n == 0 ? 0xFF1FA32A : (isRed(n) ? 0xFFD62828 : 0xFF111111);
     }
 
     /** Angle (en degrés, sens horaire depuis le haut) de la case d'un numéro quand la roue a rotation = 0. */
