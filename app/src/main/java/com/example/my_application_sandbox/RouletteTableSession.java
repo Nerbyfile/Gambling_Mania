@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Tout le réseau de la table de roulette : écouteurs, présence, élection du conducteur
@@ -32,8 +33,9 @@ public class RouletteTableSession {
 
     public interface Listener {
         void onTable(TableState table);
-        void onOthersBets(List<List<Bet>> perPlayer);
-        void onClosed();                                 // le salon n'existe plus
+        void onOthersBets(Map<String, List<Bet>> perPlayer);   // id du joueur -> ses mises
+        void onSeats(List<SalonMember> seats);                 // joueurs assis (avec leur couleur)
+        void onClosed();
     }
 
     private final String salonId, myId;
@@ -82,6 +84,7 @@ public class RouletteTableSession {
         });
         regSeats = SalonRepository.listenSeats(salonId, list -> {
             seats = list;
+            listener.onSeats(list);
             drive();
         });
         regPresence = SalonRepository.listenPresence(salonId, beats -> {
@@ -157,11 +160,11 @@ public class RouletteTableSession {
 
     private void notifyOthers() {
         int round = (table == null) ? -1 : table.getRound();
-        List<List<Bet>> out = new ArrayList<>();
+        Map<String, List<Bet>> out = new TreeMap<>();            // trié par id : ordre stable
         for (Map.Entry<String, RoundBets> e : allBets.entrySet()) {
             if (e.getKey().equals(myId)) continue;
             if (e.getValue().getRound() != round) continue;      // ignore les mises d'un ancien tour
-            out.add(e.getValue().toBets());
+            out.put(e.getKey(), e.getValue().toBets());
         }
         listener.onOthersBets(out);
     }

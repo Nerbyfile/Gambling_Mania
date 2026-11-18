@@ -11,6 +11,9 @@ import com.example.my_application_sandbox.RouletteTouchHelper.Bet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeSet;
 
 /** Vue transparente qui dessine les jetons des paris par-dessus la table. Elle ne capte aucune touche. */
 public class ChipOverlayView extends View {
@@ -41,20 +44,22 @@ public class ChipOverlayView extends View {
 
     private static final class Stack {
         final Bet bet;
+        final String owner;   // null = mes jetons, sinon id du joueur
         final int[] layers;   // indices dans DENOMS, du plus gros (bas) au plus petit (haut)
         final String label;
-        final int slot;       // 0 = mes jetons ; 1, 2... = autres joueurs (décalage)
 
-        Stack(Bet bet) { this(bet, 0); }
-
-        Stack(Bet bet, int slot) {
+        Stack(Bet bet, String owner) {
             this.bet = bet;
-            this.slot = slot;
+            this.owner = owner;
             int[] all = decompose(bet.Mise);
             this.layers = Arrays.copyOf(all, Math.min(all.length, MAX_LAYERS));
             this.label = format(bet.Mise);
         }
     }
+
+    private final Paint ring = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Map<String, Integer> colors = new HashMap<>();   // id du joueur -> couleur
+    private int myColor = 0;                                       // 0 = pas d'anneau (solo)
 
     private final List<Stack> stacks = new ArrayList<>();   // mes jetons
     private final List<Stack> others = new ArrayList<>();   // jetons des autres joueurs
@@ -89,22 +94,30 @@ public class ChipOverlayView extends View {
         stacks.clear();
         for (Bet b : bets) {
             if (b.Mise <= 0) continue;
-            Stack s = new Stack(b);
+            Stack s = new Stack(b, null);
             if (s.layers.length > 0) stacks.add(s);
         }
         invalidate();
     }
 
-    /** Mises des autres joueurs (une liste par joueur), dessinées décalées et semi-transparentes. */
-    public void setOtherBets(List<List<Bet>> perPlayer) {
+    /** Mises des autres joueurs (id -> mises), dessinées semi-transparentes. */
+    public void setOtherBets(Map<String, List<Bet>> perPlayer) {
         others.clear();
-        for (int i = 0; i < perPlayer.size(); i++) {
-            for (Bet b : perPlayer.get(i)) {
+        for (Map.Entry<String, List<Bet>> e : perPlayer.entrySet()) {
+            for (Bet b : e.getValue()) {
                 if (b.Mise <= 0) continue;
-                Stack s = new Stack(b, i + 1);
+                Stack s = new Stack(b, e.getKey());
                 if (s.layers.length > 0) others.add(s);
             }
         }
+        invalidate();
+    }
+
+    /** Couleur d'anneau de chaque joueur (les autres, puis joueur) */
+    public void setColors(Map<String, Integer> byPlayer, int mine) {
+        colors.clear();
+        colors.putAll(byPlayer);
+        myColor = mine;
         invalidate();
     }
 
@@ -192,13 +205,23 @@ public class ChipOverlayView extends View {
         float r = d / 2f;
         float off = d * LAYER_OFFSET;
 
+        // nombre de piles déjà posées à chaque endroit : mes piles comptent d'office
+        Map<String, Integer> used = new HashMap<>();
+        for (Stack s : stacks) used.put(keyOf(s.bet), 1);
+
         chipAlpha = 0.6f;                                   // les autres joueurs d'abord, en dessous
-        drawStacks(canvas, others, d, r, off);
+        drawStacks(canvas, others, d, r, off, used);
         chipAlpha = 1f;                                     // puis mes jetons par-dessus
-        drawStacks(canvas, stacks, d, r, off);
+        drawStacks(canvas, stacks, d, r, off, null);
     }
 
-    private void drawStacks(Canvas canvas, List<Stack> list, float d, float r, float off) {
+    /** Identifie un endroit de la table : même zone et mêmes numéros = même case. */
+    private static String keyOf(Bet b) {
+        return b.zone + ":" + new TreeSet<>(b.numbers);
+    }
+
+    private void drawStacks(Canvas canvas, List<Stack> list, float d, float r, float off,
+                            Map<String, Integer> used) {
         for (Stack s : list) {
             provider.anchorOf(s.bet, anchor);
 
@@ -207,13 +230,18 @@ public class ChipOverlayView extends View {
             // pile centrée sur le point d'ancrage, mais gardée dans la vue
             float top = anchor[1] - height / 2f;
             top = Math.max(0f, Math.min(top, getHeight() - height));
-            float cx = anchor[0] + s.slot * d * 0.30f;      // chaque autre joueur est décalé
+
+            // exactement sur la case ; léger décalage seulement si une pile est déjà au même endroit
+            int rank = (used == null) ? 0 : used.merge(keyOf(s.bet), 1, Integer::sum) - 1;
+            float cx = anchor[0] + rank * d * 0.30f;
             cx = Math.max(r, Math.min(cx, getWidth() - r));
             float baseCy = top + height - r;                // centre du jeton du bas
 
+            int ringColor = (s.owner == null) ? myColor : colors.getOrDefault(s.owner, 0);
+
             for (int i = 0; i < n; i++) {
                 float cy = baseCy - i * off;
-                drawChip(canvas, cx, cy, r, COLORS[s.layers[i]], i == n - 1 ? s.label : null);
+                drawChip(canvas, cx, cy, r, COLORS[s.layers[i]], i == n - 1 ? s.label : null, ringColor);
             }
         }
     }
@@ -224,10 +252,19 @@ public class ChipOverlayView extends View {
         return (argb & 0x00FFFFFF) | (alpha << 24);
     }
 
-    private void drawChip(Canvas canvas, float cx, float cy, float r, int color, String label) {
+    private void drawChip(Canvas canvas, float cx, float cy, float r, int color, String label, int ringColor) {
         // ombre
         fill.setColor(a(0x55000000));
         canvas.drawCircle(cx + r * 0.08f, cy + r * 0.08f, r, fill);
+
+        // anneau de la couleur du joueur, collé autour du jeton
+        if (ringColor != 0) {
+            float w = r * 0.22f;
+            ring.setStyle(Paint.Style.STROKE);
+            ring.setStrokeWidth(w);
+            ring.setColor(a(ringColor));
+            canvas.drawCircle(cx, cy, r + w / 2f - 0.5f, ring);
+        }
 
         // corps
         fill.setColor(a(color));

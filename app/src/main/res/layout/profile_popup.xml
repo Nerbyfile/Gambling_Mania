@@ -33,6 +33,7 @@
                     android:layout_width="56dp"
                     android:layout_height="56dp"
                     android:layout_gravity="top|start"
+                    android:padding="2dp"
                     android:scaleType="centerCrop"
                     android:src="@drawable/avatar_1"
                     app:shapeAppearanceOverlay="@style/ShapeAppearance.Circle"

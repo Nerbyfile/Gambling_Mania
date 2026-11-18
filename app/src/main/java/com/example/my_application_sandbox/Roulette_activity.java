@@ -27,6 +27,7 @@ import android.widget.FrameLayout;
 import android.widget.GridLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.LinearLayout;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.SystemBarStyle;
@@ -42,12 +43,17 @@ import com.example.my_application_sandbox.RouletteTouchHelper.Zone;
 import com.example.my_application_sandbox.SalonRepository.TableState;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.example.my_application_sandbox.SalonRepository.SalonMember;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.imageview.ShapeableImageView;
 
 import java.text.NumberFormat;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /** Table de roulette. Solo si lancée sans salon ; table d'un salon multijoueur si EXTRA_SALON_ID est fourni. */
 public class Roulette_activity extends AppCompatActivity {
@@ -83,6 +89,11 @@ public class Roulette_activity extends AppCompatActivity {
     private boolean bettingOpen = true;
 
     private final NumberFormat format = NumberFormat.getIntegerInstance();
+
+    private List<SalonMember> seats = new ArrayList<>();
+    private LinearLayout playersList;      // non null seulement quand la popup est ouverte
+
+    private Map<String, Integer> seatColors = new HashMap<>();   // id du joueur -> couleur
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -521,12 +532,30 @@ public class Roulette_activity extends AppCompatActivity {
         addContentView(spin, new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
+        View btnPlayers = findViewById(R.id.btn_players);
+        btnPlayers.setVisibility(View.VISIBLE);
+        btnPlayers.setOnClickListener(v -> showPlayers());
+
         session = new RouletteTableSession(salonId, Player.current().getId(),
                 new RouletteTableSession.Listener() {
                     @Override public void onTable(TableState t) { onTableChanged(t); }
 
-                    @Override public void onOthersBets(List<List<Bet>> perPlayer) {
+                    @Override public void onOthersBets(Map<String, List<Bet>> perPlayer) {
                         chipOverlay.setOtherBets(perPlayer);
+                    }
+
+                    @Override public void onSeats(List<SalonMember> list) {
+                        seats = list;
+                        seatColors = SalonRepository.assignColors(list);
+
+                        // mes jetons : ma couleur ; les autres : leurs couleurs
+                        String myId = Player.current().getId();
+                        Map<String, Integer> others = new HashMap<>(seatColors);
+                        Integer mine = others.remove(myId);
+                        chipOverlay.setColors(others, mine != null ? mine : 0);
+
+                        ((TextView) findViewById(R.id.txt_players_count)).setText(String.valueOf(list.size()));
+                        if (playersList != null) fillPlayers();   // popup ouverte : mise à jour
                     }
 
                     @Override public void onClosed() {
@@ -534,6 +563,35 @@ public class Roulette_activity extends AppCompatActivity {
                         finish();
                     }
                 });
+    }
+
+    private void showPlayers() {
+        View view = getLayoutInflater().inflate(R.layout.dialog_players, null);
+        playersList = view.findViewById(R.id.players_list);
+        fillPlayers();
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this).setView(view).create();
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        dialog.setOnDismissListener(d -> playersList = null);
+        dialog.show();
+        dialog.getWindow().setDimAmount(0.8f);
+    }
+
+    private void fillPlayers() {
+        playersList.removeAllViews();
+        String myId = Player.current().getId();
+        for (SalonMember m : seats) {
+            View row = getLayoutInflater().inflate(R.layout.item_player_row, playersList, false);
+
+            ShapeableImageView img = row.findViewById(R.id.img_player);
+            img.setImageResource(Avatar.res(m.getAvatarId()));
+            Integer c = seatColors.get(m.getId());
+            img.setStrokeColor(ColorStateList.valueOf(c != null ? c : 0xFFC9A227));
+
+            String name = m.getName() + (m.getId().equals(myId) ? " (toi)" : "");
+            ((TextView) row.findViewById(R.id.txt_player_name)).setText(name);
+            playersList.addView(row);
+        }
     }
 
     /** Réagit à l'état de la table (basé sur l'état : on peut arriver à n'importe quel moment). */

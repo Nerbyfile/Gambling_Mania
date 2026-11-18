@@ -52,6 +52,7 @@
                 android:id="@+id/img_avatar"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:padding="2dp"
                 android:scaleType="centerCrop"
                 android:src="@drawable/avatar_1"
                 app:shapeAppearanceOverlay="@style/ShapeAppearance.Circle"

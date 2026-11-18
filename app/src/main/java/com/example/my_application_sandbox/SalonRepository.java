@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.Comparator;
 
 /**
  * salons/{id}                      nom, code, visibilité, nb de membres
@@ -35,6 +36,49 @@ public final class SalonRepository {
     private static final int CODE_LENGTH = 5;
     private static final String CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     private static final SecureRandom RANDOM = new SecureRandom();
+    public static final int[] SEAT_COLORS = {
+            0xFF42A5F5,   // bleu
+            0xFFFF9800,   // orange
+            0xFFBA68C8,   // violet
+            0xFFF06292,   // rose
+            0xFFFFEB3B,   // jaune
+            0xFFFFFFFF,   // blanc
+            0xFF1DE9B6,   // turquoise
+            0xFFFF5252    // rouge vif
+    };
+
+    public static int seatColor(int index) {
+        return SEAT_COLORS[Math.floorMod(index, SEAT_COLORS.length)];
+    }
+
+    /** Couleur finale de chaque joueur assis : toutes différentes, identiques sur tous les téléphones. */
+    public static Map<String, Integer> assignColors(List<SalonMember> seats) {
+        List<SalonMember> sorted = new ArrayList<>(seats);
+        sorted.sort(Comparator.comparingLong(SalonMember::getSeatSince).thenComparing(SalonMember::getId));
+
+        Map<String, Integer> out = new HashMap<>();
+        boolean[] taken = new boolean[SEAT_COLORS.length];
+        List<SalonMember> conflicts = new ArrayList<>();
+
+        // chacun garde sa couleur enregistrée si personne de plus ancien ne l'a prise
+        for (SalonMember m : sorted) {
+            int c = Math.floorMod(m.getSeatColor(), SEAT_COLORS.length);
+            if (!taken[c]) {
+                taken[c] = true;
+                out.put(m.getId(), SEAT_COLORS[c]);
+            } else {
+                conflicts.add(m);
+            }
+        }
+        // les doublons reçoivent la première couleur libre
+        for (SalonMember m : conflicts) {
+            int free = 0;
+            while (free < taken.length - 1 && taken[free]) free++;
+            taken[free] = true;
+            out.put(m.getId(), SEAT_COLORS[free]);
+        }
+        return out;
+    }
 
     // ---------- Callbacks ----------
     public interface Callback<T> { void onSuccess(T result); void onError(Exception e); }
@@ -78,7 +122,13 @@ public final class SalonRepository {
 
     public static class SalonMember {
         private String id, name, game;      // game = null si dans le hall
+        private int avatarId;
         private long seatSince;
+
+        private int seatColor;   // index dans SEAT_COLORS
+
+        public int getSeatColor() { return seatColor; }
+        public void setSeatColor(int seatColor) { this.seatColor = seatColor; }
 
         public SalonMember() { }
         public String getId() { return id; }
@@ -89,6 +139,8 @@ public final class SalonRepository {
         public void setGame(String game) { this.game = game; }
         public long getSeatSince() { return seatSince; }
         public void setSeatSince(long seatSince) { this.seatSince = seatSince; }
+        public int getAvatarId() { return avatarId; }
+        public void setAvatarId(int avatarId) { this.avatarId = avatarId; }
     }
 
     public static class TableState {
@@ -182,6 +234,7 @@ public final class SalonRepository {
         SalonMember m = new SalonMember();
         m.setId(p.getId());
         m.setName(p.getName());
+        m.setAvatarId(p.getAvatarId());
         m.setGame(null);
         m.setSeatSince(0);
         return m;
@@ -320,12 +373,25 @@ public final class SalonRepository {
 
     // ---------- Table de roulette ----------
 
-    /** S'assoit à la table (garde l'ancienneté si déjà assis). */
+    /** S'assoit à la table (garde l'ancienneté et la couleur si déjà assis). */
     public static void sit(String salonId, String playerId) {
         DocumentReference m = members(salonId).document(playerId);
         m.get().addOnSuccessListener(d -> {
             if (d.exists() && GAME_ROULETTE.equals(d.getString("game"))) return;
-            m.update("game", GAME_ROULETTE, "seatSince", System.currentTimeMillis());
+            members(salonId).whereEqualTo("game", GAME_ROULETTE).get().addOnSuccessListener(snap -> {
+                boolean[] taken = new boolean[SEAT_COLORS.length];
+                for (DocumentSnapshot s : snap.getDocuments()) {
+                    Long c = s.getLong("seatColor");
+                    if (c != null && c >= 0 && c < taken.length) taken[c.intValue()] = true;
+                }
+                int free = snap.size() % SEAT_COLORS.length;   // si tout est pris
+                for (int i = 0; i < taken.length; i++) {
+                    if (!taken[i]) { free = i; break; }
+                }
+                m.update("game", GAME_ROULETTE,
+                        "seatSince", System.currentTimeMillis(),
+                        "seatColor", free);
+            });
         });
     }
 
