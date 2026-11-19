@@ -294,4 +294,11 @@ public class ChipOverlayView extends View {
             canvas.drawText(label, cx, baseline, text);
         }
     }
+
+    /** Fin de tirage : ne garde que les piles dont le pari contient le numéro gagnant (les miennes et celles des autres). */
+    public void keepWinning(int n) {
+        stacks.removeIf(s -> !s.bet.numbers.contains(n));
+        others.removeIf(s -> !s.bet.numbers.contains(n));
+        invalidate();
+    }
 }

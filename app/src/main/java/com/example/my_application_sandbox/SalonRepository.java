@@ -9,6 +9,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.WriteBatch;
+import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.Source;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -156,6 +159,9 @@ public final class SalonRepository {
         private List<Integer> history = new ArrayList<>();
 
         public TableState() { }
+        private Timestamp phaseStartedAt;   // heure serveur du début de la phase (null le temps que le serveur confirme)
+        public Timestamp getPhaseStartedAt() { return phaseStartedAt; }
+        public void setPhaseStartedAt(Timestamp t) { this.phaseStartedAt = t; }
         public String getPhase() { return phase; }
         public void setPhase(String phase) { this.phase = phase; }
         public int getRound() { return round; }
@@ -284,6 +290,8 @@ public final class SalonRepository {
 
                     TableState t = new TableState();   // table de roulette : en pause jusqu'au premier joueur
 
+                    t.setHistory(RouletteHistory.randomPast(RouletteHistory.MAX));
+
                     WriteBatch batch = FirebaseFirestore.getInstance().batch();
                     batch.set(ref, s);
                     batch.set(ref.collection("members").document(owner.getId()), memberOf(owner));
@@ -379,7 +387,7 @@ public final class SalonRepository {
     // ---------- Table de roulette ----------
 
     /** S'assoit à la table (garde l'ancienneté et la couleur si déjà assis). */
-    public static void sit(String salonId, String playerId) {
+    public static void sit(String salonId, String playerId, long now) {
         DocumentReference m = members(salonId).document(playerId);
         m.get().addOnSuccessListener(d -> {
             if (d.exists() && GAME_ROULETTE.equals(d.getString("game"))) return;
@@ -394,7 +402,7 @@ public final class SalonRepository {
                     if (!taken[i]) { free = i; break; }
                 }
                 m.update("game", GAME_ROULETTE,
-                        "seatSince", System.currentTimeMillis(),
+                        "seatSince", now,
                         "seatColor", free);
             });
         });
@@ -413,6 +421,22 @@ public final class SalonRepository {
                 .set(Collections.singletonMap("beat", beat));
     }
 
+    public interface OffsetListener { void onOffset(long offsetMs); }
+
+    /** Décalage = heure serveur − heure du téléphone (ms). 0 si ça échoue. */
+    public static void measureServerOffset(String salonId, String playerId, OffsetListener l) {
+        DocumentReference ref = salons().document(salonId).collection("presence").document(playerId + "_clock");
+        long before = System.currentTimeMillis();
+        ref.set(Collections.singletonMap("ts", FieldValue.serverTimestamp()))
+                .addOnSuccessListener(v -> ref.get(Source.SERVER).addOnSuccessListener(d -> {
+                    long after = System.currentTimeMillis();
+                    Timestamp ts = d.getTimestamp("ts");
+                    ref.delete();
+                    l.onOffset(ts == null ? 0 : ts.toDate().getTime() - (before + after) / 2);
+                }).addOnFailureListener(e -> l.onOffset(0)))
+                .addOnFailureListener(e -> l.onOffset(0));
+    }
+
     /** Change la phase de la table seulement si le tour et la phase attendus sont toujours les bons. */
     public static void advance(String salonId, int expectedRound, String expectedPhase,
                                Map<String, Object> updates) {
@@ -422,7 +446,9 @@ public final class SalonRepository {
             Long round = s.getLong("round");
             if (s.exists() && expectedPhase.equals(s.getString("phase"))
                     && round != null && round.intValue() == expectedRound) {
-                tr.update(t, updates);
+                Map<String, Object> u = new HashMap<>(updates);
+                u.put("phaseStartedAt", FieldValue.serverTimestamp());
+                tr.update(t, u);
             }
             return null;
         });

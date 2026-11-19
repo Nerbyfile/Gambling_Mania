@@ -14,6 +14,9 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
 /** Calque plein écran avec la roue et la balle, affiché pendant la phase SPINNING. */
 public class SpinOverlayView extends FrameLayout {
 
@@ -71,7 +74,9 @@ public class SpinOverlayView extends FrameLayout {
         int w = MeasureSpec.getSize(widthSpec);
         int h = MeasureSpec.getSize(heightSpec);
 
-        int top = (int) (32 * dp);
+        WindowInsetsCompat wi = ViewCompat.getRootWindowInsets(this);
+        int bar = wi != null ? wi.getInsets(WindowInsetsCompat.Type.systemBars()).top : (int) (24 * dp);
+        int top = bar + (int) (24 * dp);
         int tableW = (int) Math.min(w * 0.94f, 560 * dp);
         int tableH = Math.round(tableW * MiniTableView.ROWS / (float) MiniTableView.COLS);
         LayoutParams tp = (LayoutParams) table.getLayoutParams();
@@ -99,7 +104,6 @@ public class SpinOverlayView extends FrameLayout {
         cancel();
         txtResult.setVisibility(GONE);
         setVisibility(VISIBLE);
-        table.setWinning(-1);
         wheel.setRotation(0f);
         orbit.setRotation(0f);
         ball.setTranslationY(0f);
@@ -130,7 +134,7 @@ public class SpinOverlayView extends FrameLayout {
             @Override public void onAnimationCancel(Animator animation) { canceled = true; }
             @Override public void onAnimationEnd(Animator animation) {
                 if (canceled) return;
-                table.setWinning(number);                    // entoure le numéro quand la balle s'arrête
+                table.showResult(number);        // jetons gagnants + zones gagnantes ; fige la table
                 if (onEnd != null) onEnd.run();
             }
         });
@@ -146,6 +150,7 @@ public class SpinOverlayView extends FrameLayout {
         cancel();
         txtResult.setVisibility(GONE);
         setVisibility(INVISIBLE);
+        table.clearResult();
     }
 
     private void cancel() {

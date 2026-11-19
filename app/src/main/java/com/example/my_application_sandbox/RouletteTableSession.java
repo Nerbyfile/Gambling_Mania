@@ -9,6 +9,7 @@ import com.example.my_application_sandbox.SalonRepository.RoundBets;
 import com.example.my_application_sandbox.SalonRepository.SalonMember;
 import com.example.my_application_sandbox.SalonRepository.TableState;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.Timestamp;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -55,6 +56,7 @@ public class RouletteTableSession {
 
     private List<Bet> pending = null;
     private int pendingRound;
+    private long serverOffset = 0;
 
     public RouletteTableSession(String salonId, String myId, Listener listener) {
         this.salonId = salonId;
@@ -69,7 +71,14 @@ public class RouletteTableSession {
         started = true;
         arrival = true;
 
-        SalonRepository.sit(salonId, myId);
+        SalonRepository.measureServerOffset(salonId, myId, off -> {
+            if (!started) return;
+            serverOffset = off;
+            SalonRepository.sit(salonId, myId, serverNow());     // bonus 1.e
+            driveKey = null;                                     // force à replanifier avec la bonne horloge
+            if (table != null) listener.onTable(table);          // fait recalculer le chrono affiché
+            drive();
+        });
 
         regTable = SalonRepository.listenTable(salonId, t -> {
             if (t == null) { listener.onClosed(); return; }
@@ -208,6 +217,16 @@ public class RouletteTableSession {
         }
     }
 
+    public long serverNow() { return System.currentTimeMillis() + serverOffset; }
+
+    /** Millisecondes restantes dans la phase en cours (phaseMs = durée totale de cette phase). */
+    public long phaseRemaining(TableState t, long phaseMs) {
+        Timestamp s = t.getPhaseStartedAt();
+        if (s == null) return phaseMs;                       // pas encore confirmé : ça vient de commencer
+        long elapsed = serverNow() - s.toDate().getTime();
+        return Math.max(0, Math.min(phaseMs, phaseMs - elapsed));
+    }
+
     // ---------- Conducteur ----------
 
     /** Conducteur = le plus ancien assis encore vivant. Même calcul sur tous les téléphones. */
@@ -233,9 +252,9 @@ public class RouletteTableSession {
         final String phase = table.getPhase();
         long delay;
         switch (phase) {
-            case TableState.BETTING:  delay = BET_MS + GRACE_MS; break;
-            case TableState.SPINNING: delay = SPIN_MS + 500; break;
-            case TableState.RESULT:   delay = RESULT_MS; break;
+            case TableState.BETTING:  delay = phaseRemaining(table, BET_MS) + GRACE_MS; break;
+            case TableState.SPINNING: delay = phaseRemaining(table, SPIN_MS) + 500; break;
+            case TableState.RESULT:   delay = phaseRemaining(table, RESULT_MS); break;
             default: return;                              // IDLE : on attend un joueur
         }
         driveTask = () -> step(round, phase);

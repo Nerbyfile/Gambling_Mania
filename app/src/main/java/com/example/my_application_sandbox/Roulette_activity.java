@@ -32,6 +32,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.widget.ImageButton;
+import android.util.TypedValue;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.SystemBarStyle;
@@ -48,7 +49,6 @@ import com.example.my_application_sandbox.SalonRepository.TableState;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.example.my_application_sandbox.SalonRepository.SalonMember;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.imageview.ShapeableImageView;
 
 import java.text.NumberFormat;
@@ -104,6 +104,8 @@ public class Roulette_activity extends AppCompatActivity {
     private LinearLayout historyStrip;
     private TextView txtHistoryStatus, txtHistoryEmpty;
     private boolean historyShown = false;
+
+    private List<Integer> lastHistory = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -196,6 +198,10 @@ public class Roulette_activity extends AppCompatActivity {
         btnGomme = findViewById(R.id.btn_gomme);
         zonePlay         = findViewById(R.id.zone_play);
         zoneHistory      = findViewById(R.id.zone_history);
+        // redessine l'historique quand la largeur / hauteur de la zone change (ouverture, autre écran, rotation)
+        zoneHistory.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+            if (right - left != oldRight - oldLeft || bottom - top != oldBottom - oldTop) showHistory(lastHistory);
+        });
         historyStrip     = findViewById(R.id.history_strip);
         txtHistoryStatus = findViewById(R.id.txt_history_status);
         txtHistoryEmpty  = findViewById(R.id.txt_history_empty);
@@ -626,7 +632,9 @@ public class Roulette_activity extends AppCompatActivity {
 
         switch (t.getPhase()) {
             case TableState.BETTING:
-                bettingOpen = true;
+                long left = session.phaseRemaining(t, RouletteTableSession.BET_MS);
+                phaseDeadline = SystemClock.elapsedRealtime() + left;
+                bettingOpen = left > 0;
                 spin.hide();
                 if (fresh) {
                     // des mises d'un tour que j'ai manqué (appli en arrière-plan) : remboursées
@@ -634,7 +642,6 @@ public class Roulette_activity extends AppCompatActivity {
                         player.removeAllBets();
                         toast("Mises du tour précédent remboursées");
                     }
-                    phaseDeadline = SystemClock.elapsedRealtime() + RouletteTableSession.BET_MS;
                     handler.removeCallbacks(ticker);
                     handler.post(ticker);
                 }
@@ -802,18 +809,47 @@ public class Roulette_activity extends AppCompatActivity {
     }
 
     /** Dessine les pastilles : plus récent à gauche, entouré d'or. */
+    /** Dessine les pastilles sur 2 rangées de 5 : plus récent en haut à gauche, entouré d'or. */
     private void showHistory(List<Integer> numbers) {
         if (numbers == null) numbers = new ArrayList<>();
+        lastHistory = numbers;
         historyStrip.removeAllViews();
+
+        final int perRow = 5;
+        final int rows = (RouletteHistory.MAX + perRow - 1) / perRow;    // 2 rangées, fixe : les ronds ne changent pas de taille quand la liste se remplit
         float dp = getResources().getDisplayMetrics().density;
-        int size = (int) (26 * dp);
+        int margin = (int) (2 * dp);      // marge gauche/droite de chaque rond
+        int rowGap = (int) (2 * dp);      // espace entre les rangées
+        int size = (int) (24 * dp);
+
+        int availW = zoneHistory.getWidth() - zoneHistory.getPaddingLeft() - zoneHistory.getPaddingRight();
+        int availH = zoneHistory.getHeight() - zoneHistory.getPaddingTop() - zoneHistory.getPaddingBottom();
+        if (availW > 0 && availH > 0) {
+            int statusH = Math.max(txtHistoryStatus.getHeight(), (int) (18 * dp)) + (int) (4 * dp);
+            int byWidth  = availW / perRow - 2 * margin;
+            int byHeight = (availH - statusH) / rows - rowGap;
+            size = Math.min(size, Math.min(byWidth, byHeight));          // on prend la contrainte la plus serrée
+        }
+        size = Math.max(size, (int) (14 * dp));                           // garde-fou
+
+        LinearLayout row = null;
         for (int i = 0; i < numbers.size(); i++) {
+            if (i % perRow == 0) {                        // nouvelle rangée
+                row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                row.setGravity(Gravity.CENTER);
+                LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                rp.bottomMargin = rowGap;
+                historyStrip.addView(row, rp);
+            }
+
             int n = numbers.get(i);
             TextView tv = new TextView(this);
             tv.setText(String.valueOf(n));
             tv.setGravity(Gravity.CENTER);
             tv.setTextColor(Color.WHITE);
-            tv.setTextSize(12);
+            tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, size * 0.46f);
             tv.setTypeface(null, Typeface.BOLD);
 
             GradientDrawable bg = new GradientDrawable();
@@ -824,8 +860,9 @@ public class Roulette_activity extends AppCompatActivity {
             tv.setBackground(bg);
 
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(size, size);
-            lp.setMarginEnd((int) (4 * dp));
-            historyStrip.addView(tv, lp);
+            lp.setMarginStart(margin);
+            lp.setMarginEnd(margin);
+            row.addView(tv, lp);
         }
         txtHistoryEmpty.setVisibility(numbers.isEmpty() ? View.VISIBLE : View.GONE);
     }

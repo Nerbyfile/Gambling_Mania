@@ -14,6 +14,8 @@ import com.example.my_application_sandbox.RouletteTouchHelper.Zone;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
 
 /** Table de roulette à l'horizontale (lecture seule), avec les jetons des paris posés dessus. */
 public class MiniTableView extends FrameLayout implements ChipOverlayView.AnchorProvider {
@@ -41,6 +43,8 @@ public class MiniTableView extends FrameLayout implements ChipOverlayView.Anchor
     private float cw, ch;                     // taille d'une case
     private int winning = -1;                 // numéro à entourer (-1 = aucun)
 
+    private boolean locked = false;   // vrai après le tirage : on ignore les mises à jour de jetons
+
     public MiniTableView(Context c) { this(c, null); }
 
     public MiniTableView(Context c, AttributeSet a) {
@@ -67,12 +71,27 @@ public class MiniTableView extends FrameLayout implements ChipOverlayView.Anchor
 
     // ---- API ----
 
-    public void setBets(List<Bet> bets) { chips.setBets(bets); }
-    public void setOtherBets(Map<String, List<Bet>> perPlayer) { chips.setOtherBets(perPlayer); }
+    public void setBets(List<Bet> bets) { if (!locked) chips.setBets(bets); }
+    public void setOtherBets(Map<String, List<Bet>> perPlayer) { if (!locked) chips.setOtherBets(perPlayer); }
     public void setColors(Map<String, Integer> byPlayer, int mine) { chips.setColors(byPlayer, mine); }
 
-    /** Entoure le numéro gagnant (-1 pour effacer). */
-    public void setWinning(int n) { winning = n; invalidate(); }
+    /** Fin de tirage : garde les jetons gagnants, entoure les zones gagnantes, fige l'affichage. */
+    public void showResult(int n) {
+        winning = n;
+        locked = true;
+        chips.keepWinning(n);
+        invalidate();
+    }
+
+    /** Nouveau tour : efface le résultat et les jetons. Sans effet s'il n'y a pas de résultat affiché. */
+    public void clearResult() {
+        if (!locked && winning < 0) return;
+        winning = -1;
+        locked = false;
+        chips.setBets(new ArrayList<>());
+        chips.setOtherBets(new HashMap<>());
+        invalidate();
+    }
 
     // ---- Mesure : hauteur imposée par la largeur ----
 
@@ -174,11 +193,7 @@ public class MiniTableView extends FrameLayout implements ChipOverlayView.Anchor
             box(canvas, r, color, SIMPLE_LABELS[i]);
         }
 
-        if (winning >= 0) {                           // numéro gagnant entouré d'or
-            if (winning == 0) cell(0, 0, 1, 3, r); else numberCell(winning, r);
-            float in = gold.getStrokeWidth() / 2f;
-            canvas.drawRect(r.left + in, r.top + in, r.right - in, r.bottom - in, gold);
-        }
+        if (winning >= 0) drawWinningSpots(canvas);
     }
 
     private void box(Canvas c, RectF rect, int color, String label) {
@@ -191,5 +206,26 @@ public class MiniTableView extends FrameLayout implements ChipOverlayView.Anchor
         if (w > max) text.setTextSize(text.getTextSize() * max / w);
         float y = rect.centerY() - (text.ascent() + text.descent()) / 2f;
         c.drawText(label, rect.centerX(), y, text);
+    }
+
+    /** Entoure la case du numéro ET toutes les zones qui auraient gagné : colonne, douzaine, chances simples. */
+    private void drawWinningSpots(Canvas canvas) {
+        if (winning == 0) cell(0, 0, 1, 3, r); else numberCell(winning, r);
+        outline(canvas, r);
+        if (winning == 0) return;       // Zone.contient(0) répond vrai pour PAIR / NOIR / DOUZAINE_1…, on l'ignore
+
+        for (Zone z : Zone.values()) {
+            if (z.contient(winning)) {
+                zoneCell(z, r);
+                outline(canvas, r);
+            }
+        }
+    }
+
+    private void outline(Canvas c, RectF rect) {
+        fill.setColor(0x44F3C300);                       // léger voile doré
+        c.drawRect(rect, fill);
+        float in = gold.getStrokeWidth() / 2f;
+        c.drawRect(rect.left + in, rect.top + in, rect.right - in, rect.bottom - in, gold);
     }
 }

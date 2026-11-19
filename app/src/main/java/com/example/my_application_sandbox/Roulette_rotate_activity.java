@@ -11,6 +11,7 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
+import android.os.CountDownTimer;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,7 +21,8 @@ import androidx.core.view.WindowInsetsCompat;
 
 public class Roulette_rotate_activity extends AppCompatActivity {
 
-
+    private static final long RETURN_DELAY_MS = 6000;   // temps avant le retour automatique à la table
+    private CountDownTimer backTimer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,7 +31,8 @@ public class Roulette_rotate_activity extends AppCompatActivity {
         setContentView(R.layout.activity_roulette_rotate);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            int pad = (int) (24 * getResources().getDisplayMetrics().density);
+            v.setPadding(systemBars.left + pad, systemBars.top + pad, systemBars.right + pad, systemBars.bottom + pad);
             return insets;
         });
         View wheel = findViewById(R.id.wheel);
@@ -47,7 +50,9 @@ public class Roulette_rotate_activity extends AppCompatActivity {
             }
             btnSpin.setEnabled(false);
 
-            miniTable.setWinning(-1);
+            btnSpin.setText("BONNE CHANCE…");
+            miniTable.clearResult();
+            miniTable.setBets(player.getBets());
 
             int winning = new java.util.Random().nextInt(37);     // ! Non sécurisé & anticipable random extern nécéssaire
             float a = RouletteWheelView.angleOfNumber(winning); // 0..360
@@ -80,29 +85,39 @@ public class Roulette_rotate_activity extends AppCompatActivity {
             set.playTogether(wheelSpin, ballSpin, ballDrop);
             set.addListener(new AnimatorListenerAdapter() {
                 @Override public void onAnimationEnd(Animator animation) {
-                    btnSpin.setEnabled(true);
+                    miniTable.showResult(winning);
                     int payout = player.settle(winning);   // crédite les gains et vide les paris
-                    miniTable.setWinning(winning);               // entoure le numéro gagnant
-                    miniTable.setBets(player.getBets());         // les paris sont vidés par settle()
                     RouletteHistory.addSolo(winning);
-                    PlayerStore.save(btnSpin.getContext(), player.getPlayer());   // paris vidés : sûr de sauvegarder
+                    PlayerStore.save(btnSpin.getContext(), player.getPlayer());
                     PlayerRepository.updateBank(player.getPlayer());
                     String msg = "Numéro : " + winning
                             + (payout > 0 ? " — tu récupères " + payout : " — perdu")
                             + "\nSolde : " + player.getBank();
                     Toast.makeText(btnSpin.getContext(), msg, Toast.LENGTH_LONG).show();
+                    startBackCountdown(btnSpin);
                 }
             });
             set.start();
         });
     }
 
+    /** Après le tirage : le bouton devient « Retour » avec un compte à rebours, puis on revient à la table. */
+    private void startBackCountdown(Button btn) {
+        btn.setEnabled(true);
+        btn.setOnClickListener(v -> finish());               // on peut revenir avant la fin du compte à rebours
+        backTimer = new CountDownTimer(RETURN_DELAY_MS, 1000) {
+            @Override public void onTick(long msLeft) {
+                btn.setText("RETOUR À LA TABLE  (" + ((msLeft + 999) / 1000) + ")");
+            }
+            @Override public void onFinish() { finish(); }
+        }.start();
+    }
 
-
-
-
-
-// Le pivot par défaut d'une View est son centre : rien à configurer.
+    @Override
+    protected void onDestroy() {
+        if (backTimer != null) backTimer.cancel();
+        super.onDestroy();
+    }
 
 
 }

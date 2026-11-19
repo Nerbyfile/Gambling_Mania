@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#66FFFFFF">
+    <item>
+        <selector>
+            <!-- désactivé (pendant le tirage) -->
+            <item android:state_enabled="false">
+                <shape android:shape="rectangle">
+                    <solid android:color="#8C8C8C" />
+                    <stroke android:width="2dp" android:color="#B5B5B5" />
+                    <corners android:radius="32dp" />
+                </shape>
+            </item>
+            <!-- actif : dégradé doré -->
+            <item>
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:angle="270"
+                        android:endColor="#C9A227"
+                        android:startColor="#F5D78A" />
+                    <stroke android:width="2dp" android:color="#FFF3C4" />
+                    <corners android:radius="32dp" />
+                </shape>
+            </item>
+        </selector>
+    </item>
+</ripple>
