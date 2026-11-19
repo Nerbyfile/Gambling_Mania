@@ -24,6 +24,7 @@
         android:textStyle="bold" />
 
     <TextView
+        android:id="@+id/txt_invite_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
@@ -34,17 +35,29 @@
         android:textStyle="bold" />
 
     <FrameLayout
+        android:id="@+id/friends_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:background="@drawable/card_bg">
 
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/list_invite_friends"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:padding="8dp" />
+
         <TextView
+            android:id="@+id/txt_friends_empty"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="Bientôt disponible"
-            android:textColor="#9FBF9F" />
+            android:gravity="center"
+            android:padding="16dp"
+            android:text="Tu n'as pas encore d'amis à inviter"
+            android:textColor="#9FBF9F"
+            android:visibility="gone" />
     </FrameLayout>
 
     <CheckBox
