@@ -1,5 +1,6 @@
 package com.example.my_application_sandbox;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
@@ -108,8 +109,10 @@ public class Notifications_activity extends AppCompatActivity {
                     }
                 }
             });
+        } else if (AppNotification.SALON_INVITE.equals(n.getType())) {
+            joinInvitedSalon(n);
         } else {
-            toast("Bientôt disponible");   // autres types (invitation de salon...) : à venir
+            toast("Bientôt disponible");
         }
     }
 
@@ -144,6 +147,30 @@ public class Notifications_activity extends AppCompatActivity {
                 if (n != null) NotificationRepository.delete(me.getId(), n.getId());
             }
         }).attachToRecyclerView(list);
+    }
+
+    /** Rejoint le salon de l'invitation (même s'il est privé : l'invitation en donne l'accès). */
+    private void joinInvitedSalon(AppNotification n) {
+        SalonRepository.joinById(n.getRefId(), me, new SalonRepository.Callback<SalonRepository.Salon>() {
+            @Override public void onSuccess(SalonRepository.Salon salon) {
+                NotificationRepository.delete(me.getId(), n.getId());
+                Intent i = new Intent(Notifications_activity.this, Salon_activity.class);
+                i.putExtra(Salon_activity.EXTRA_SALON_ID, salon.getId());
+                i.putExtra(Salon_activity.EXTRA_SALON_NAME, salon.getName());
+                i.putExtra(Salon_activity.EXTRA_SALON_CODE, salon.getCode());
+                startActivity(i);
+                finish();
+            }
+
+            @Override public void onError(Exception e) {
+                String msg = e.getMessage();
+                toast(msg != null ? msg : "Connexion impossible, réessaie");
+                // le salon n'existe plus : l'invitation est périmée
+                if (msg != null && msg.contains("introuvable")) {
+                    NotificationRepository.delete(me.getId(), n.getId());
+                }
+            }
+        });
     }
 
     private void toast(String msg) {

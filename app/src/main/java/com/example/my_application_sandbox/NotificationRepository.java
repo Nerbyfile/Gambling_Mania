@@ -91,4 +91,11 @@ public final class NotificationRepository {
         }
         if (count > 0) batch.commit();
     }
+    /** Envoie la même notification à plusieurs joueurs en une seule écriture groupée. */
+    public static void sendToMany(List<String> toPlayerIds, AppNotification n) {
+        if (toPlayerIds.isEmpty()) return;
+        WriteBatch batch = FirebaseFirestore.getInstance().batch();
+        for (String playerId : toPlayerIds) batch.set(ref(playerId, n.getId()), n);
+        batch.commit();
+    }
 }

@@ -108,7 +108,7 @@ public class SalonList_activity extends AppCompatActivity {
 
         findViewById(R.id.btnHome).setOnClickListener(v -> finish());
         btnCreate.setOnClickListener(v ->
-                startActivity(new Intent(this, CreateSalonActivity.class)));   // Multi 2
+                startActivity(new Intent(this, CreateSalon_activity.class)));   // Multi 2
         findViewById(R.id.btn_join_code).setOnClickListener(v -> askCode());
     }
 
