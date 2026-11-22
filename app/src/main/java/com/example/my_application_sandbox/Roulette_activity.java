@@ -41,6 +41,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.activity.OnBackPressedCallback;
+
 
 import com.example.my_application_sandbox.RouletteTouchHelper.Bet;
 import com.example.my_application_sandbox.RouletteTouchHelper.Kind;
@@ -58,6 +60,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.security.SecureRandom;
 
 /** Table de roulette. Solo si lancée sans salon ; table d'un salon multijoueur si EXTRA_SALON_ID est fourni. */
 public class Roulette_activity extends AppCompatActivity {
@@ -79,6 +82,13 @@ public class Roulette_activity extends AppCompatActivity {
     private Button btnGomme;
     private boolean gommeActive = false;
     private boolean gommeGesture = false;
+
+    // ---- Solo : la roue passe par le même calque que le multijoueur ----
+    private static final long SOLO_RESULT_MS = 6000;      // résultat affiché avant le retour automatique à la table
+    private boolean soloSpinning = false;                 // roue en cours ou résultat affiché
+    private boolean soloResultShown = false;              // le tirage est fini : on peut fermer le calque
+    private OnBackPressedCallback soloBack;
+    private final Runnable endSoloTask = this::endSoloSpin;
 
     // ---- Multijoueur (table d'un salon) ----
     private String salonId = null;                       // null = partie solo
@@ -149,6 +159,20 @@ public class Roulette_activity extends AppCompatActivity {
 
         // Mode : solo ou table d'un salon
         salonId = getIntent().getStringExtra(Salon_activity.EXTRA_SALON_ID);
+        // Calque de la roue : commun au solo et au multijoueur
+        spin = new SpinOverlayView(this);
+        addContentView(spin, new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        // Solo : pendant la roue le retour est ignoré (sinon on pourrait annuler un tirage perdant) ;
+        // une fois le résultat affiché, il ferme le calque
+        soloBack = new OnBackPressedCallback(false) {
+            @Override public void handleOnBackPressed() {
+                if (soloResultShown) endSoloSpin();
+            }
+        };
+        getOnBackPressedDispatcher().addCallback(this, soloBack);
+
         if (salonId != null) setupMultiplayer();
 
         // Jetons
@@ -496,6 +520,8 @@ public class Roulette_activity extends AppCompatActivity {
         if (gommeActive && player.getBets().isEmpty()) {
             gommeActive = false;
             styleGomme();
+        } else if (soloSpinning) {
+            String titre = "BONNE CHANCE…";
         }
 
         txtBank.setText(format.format(Player.current().getBank()));
@@ -538,26 +564,67 @@ public class Roulette_activity extends AppCompatActivity {
     }
 
     /** Bouton PLAY : solo = lance la roue ; multijoueur = relance une table en pause. */
+    /** Bouton PLAY : solo = lance la roue ; multijoueur = relance une table en pause. */
     public void start_roulette(View view) {
         if (salonId != null) {
             if (table != null && TableState.IDLE.equals(table.getPhase())) session.wake();
             return;
         }
+        if (soloSpinning) return;
         if (player.getBets().isEmpty()) {
             toast("Place au moins un pari");
             return;
         }
-        Intent intent = new Intent(this, Roulette_rotate_activity.class);
-        startActivity(intent);
+        playSolo();
+    }
+
+    // ===================== Solo (même calque que le multijoueur) =====================
+
+    /** Tire le numéro et lance la roue sur le calque. Les mises sont figées jusqu'au retour à la table. */
+    private void playSolo() {
+        soloSpinning = true;
+        soloResultShown = false;
+        soloBack.setEnabled(true);
+        refreshUi();                                          // la mini-table du calque reçoit mes mises
+
+        int winning = new SecureRandom().nextInt(37);
+        spin.spinTo(winning, RouletteTableSession.SPIN_MS, () -> settleSolo(winning));
+    }
+
+    /** Fin de la roue : gains, historique, sauvegarde, résultat affiché puis retour à la table. */
+    private void settleSolo(int winning) {
+        int stake = player.getTotalStake();
+        int payout = player.settle(winning);
+        RouletteHistory.addSolo(winning);
+        saveBank();
+
+        String txt = "Numéro " + winning;
+        if (stake > 0) txt += payout > 0 ? "\nTu gagnes " + payout : "\nPerdu";
+        spin.showResult(txt + "\n\nTouche pour revenir à la table");
+
+        soloResultShown = true;
+        spin.setOnClickListener(v -> endSoloSpin());          // un tap ferme le calque
+        handler.removeCallbacks(endSoloTask);
+        handler.postDelayed(endSoloTask, SOLO_RESULT_MS);     // sinon retour automatique
+
+        showHistory(RouletteHistory.solo());
+        refreshUi();
+    }
+
+    private void endSoloSpin() {
+        handler.removeCallbacks(endSoloTask);
+        spin.setOnClickListener(null);
+        spin.hide();
+        soloSpinning = false;
+        soloResultShown = false;
+        soloBack.setEnabled(false);
+        refreshUi();
     }
 
     // ===================== Multijoueur =====================
 
     private void setupMultiplayer() {
         bettingOpen = false;                             // fermé tant qu'on n'a pas l'état de la table
-        spin = new SpinOverlayView(this);
-        addContentView(spin, new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         // chat du salon : déjà démarré par le hall (sans effet dans ce cas), au-dessus du calque de la roue
         ChatSession.start(salonId);
@@ -707,6 +774,7 @@ public class Roulette_activity extends AppCompatActivity {
     };
 
     private boolean canEdit() {
+        if (soloSpinning) return false;      // le calque couvre déjà l'écran : pas de message
         if (salonId != null && !bettingOpen) {
             toast("Les mises sont fermées");
             return false;
@@ -786,6 +854,7 @@ public class Roulette_activity extends AppCompatActivity {
         if (!isFinishing()) return;
 
         if (session == null) {                           // solo
+            spin.hide();
             player.removeAllBets();
             return;
         }
