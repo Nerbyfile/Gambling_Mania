@@ -559,6 +559,10 @@ public class Roulette_activity extends AppCompatActivity {
         addContentView(spin, new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
+        // chat du salon : déjà démarré par le hall (sans effet dans ce cas), au-dessus du calque de la roue
+        ChatSession.start(salonId);
+        ChatOverlayView.attach(this, findViewById(R.id.chat_slot), false);
+
         View btnPlayers = findViewById(R.id.btn_players);
         btnPlayers.setVisibility(View.VISIBLE);
         btnPlayers.setOnClickListener(v -> showPlayers());

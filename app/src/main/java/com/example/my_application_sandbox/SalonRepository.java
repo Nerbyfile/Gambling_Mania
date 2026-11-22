@@ -57,7 +57,7 @@ public final class SalonRepository {
     /** Couleur finale de chaque joueur assis : toutes différentes, identiques sur tous les téléphones. */
     public static Map<String, Integer> assignColors(List<SalonMember> seats) {
         List<SalonMember> sorted = new ArrayList<>(seats);
-        sorted.sort(Comparator.comparingLong(SalonMember::getSeatSince).thenComparing(SalonMember::getId));
+        sorted.sort(Comparator.comparingLong(SalonMember::getJoinedAt).thenComparing(SalonMember::getId));
 
         Map<String, Integer> out = new HashMap<>();
         boolean[] taken = new boolean[SEAT_COLORS.length];
@@ -101,6 +101,7 @@ public final class SalonRepository {
         private String id, name, code, visibility, ownerId,ownerName;
         private int memberCount;
         private long lastActive, createdAt;
+        private int colorMask;  // bit i = couleur i de SEAT_COLORS déjà attribuée à un membre
 
         public Salon() { }
         public String getId() { return id; }
@@ -121,12 +122,16 @@ public final class SalonRepository {
         public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
         public String getOwnerName() { return ownerName; }
         public void setOwnerName(String ownerName) { this.ownerName = ownerName; }
+        public int getColorMask() { return colorMask; }
+        public void setColorMask(int colorMask) { this.colorMask = colorMask; }
+
     }
 
     public static class SalonMember {
         private String id, name, game;      // game = null si dans le hall
         private int avatarId;
         private long seatSince;
+        private long joinedAt;   // arrivée dans le salon : sert à départager des couleurs en doublon
 
         private int seatColor;   // index dans SEAT_COLORS
 
@@ -144,6 +149,8 @@ public final class SalonRepository {
         public void setSeatSince(long seatSince) { this.seatSince = seatSince; }
         public int getAvatarId() { return avatarId; }
         public void setAvatarId(int avatarId) { this.avatarId = avatarId; }
+        public long getJoinedAt() { return joinedAt; }
+        public void setJoinedAt(long joinedAt) { this.joinedAt = joinedAt; }
     }
 
     public static class TableState {
@@ -241,14 +248,24 @@ public final class SalonRepository {
         return salons().document(salonId).collection("members");
     }
 
-    private static SalonMember memberOf(Player p) {
+    private static SalonMember memberOf(Player p, int color, long now) {
         SalonMember m = new SalonMember();
         m.setId(p.getId());
         m.setName(p.getName());
         m.setAvatarId(p.getAvatarId());
         m.setGame(null);
         m.setSeatSince(0);
+        m.setSeatColor(color);     // couleur attribuée dès l'arrivée dans le salon
+        m.setJoinedAt(now);
         return m;
+    }
+
+    /** Première couleur libre du salon (masque de bits) ; si tout est pris, une couleur répétée. */
+    private static int firstFreeColor(int mask, int memberCount) {
+        for (int i = 0; i < SEAT_COLORS.length; i++) {
+            if ((mask & (1 << i)) == 0) return i;
+        }
+        return Math.floorMod(memberCount, SEAT_COLORS.length);
     }
 
     private static String randomCode() {
@@ -285,6 +302,7 @@ public final class SalonRepository {
                     s.setOwnerId(owner.getId());
                     s.setOwnerName(owner.getName());
                     s.setMemberCount(1);
+                    s.setColorMask(1);                       // bit 0 : couleur du créateur
                     s.setLastActive(now);
                     s.setCreatedAt(now);
 
@@ -294,8 +312,8 @@ public final class SalonRepository {
 
                     WriteBatch batch = FirebaseFirestore.getInstance().batch();
                     batch.set(ref, s);
-                    batch.set(ref.collection("members").document(owner.getId()), memberOf(owner));
-                    batch.set(ref.collection("tables").document(GAME_ROULETTE), t);
+                    batch.set(ref.collection("members").document(owner.getId()), memberOf(owner, 0, now));                    batch.set(ref.collection("tables").document(GAME_ROULETTE), t);
+
                     batch.commit()
                             .addOnSuccessListener(v -> cb.onSuccess(s))
                             .addOnFailureListener(cb::onError);
@@ -352,9 +370,13 @@ public final class SalonRepository {
                 if (salon.getMemberCount() >= MAX_MEMBERS) {
                     throw new FirebaseFirestoreException("Salon plein", FirebaseFirestoreException.Code.ABORTED);
                 }
+                int color = firstFreeColor(salon.getColorMask(), salon.getMemberCount());
                 salon.setMemberCount(salon.getMemberCount() + 1);
-                tr.update(ref, "memberCount", salon.getMemberCount(), "lastActive", now);
-                tr.set(memberRef, memberOf(p));
+                salon.setColorMask(salon.getColorMask() | (1 << color));
+                tr.update(ref, "memberCount", salon.getMemberCount(),
+                        "lastActive", now,
+                        "colorMask", salon.getColorMask());
+                tr.set(memberRef, memberOf(p, color, now));
             } else {
                 tr.update(ref, "lastActive", now);
             }
@@ -374,8 +396,19 @@ public final class SalonRepository {
                 if (s.exists()) {
                     Long c = s.getLong("memberCount");
                     long count = (c == null) ? 0 : c;
-                    if (count <= 1) tr.delete(ref);
-                    else tr.update(ref, "memberCount", count - 1, "lastActive", System.currentTimeMillis());
+                    if (count <= 1) {
+                        tr.delete(ref);
+                    } else {
+                        Long maskValue = s.getLong("colorMask");
+                        int mask = (maskValue == null) ? 0 : maskValue.intValue();
+                        Long color = m.getLong("seatColor");
+                        if (color != null && color >= 0 && color < SEAT_COLORS.length) {
+                            mask &= ~(1 << color.intValue());      // la couleur redevient disponible
+                        }
+                        tr.update(ref, "memberCount", count - 1,
+                                "lastActive", System.currentTimeMillis(),
+                                "colorMask", mask);
+                    }
                 }
             }
             return null;
@@ -386,25 +419,12 @@ public final class SalonRepository {
 
     // ---------- Table de roulette ----------
 
-    /** S'assoit à la table (garde l'ancienneté et la couleur si déjà assis). */
+    /** S'assoit à la table (garde l'ancienneté si déjà assis). La couleur est celle attribuée à l'arrivée dans le salon. */
     public static void sit(String salonId, String playerId, long now) {
         DocumentReference m = members(salonId).document(playerId);
         m.get().addOnSuccessListener(d -> {
             if (d.exists() && GAME_ROULETTE.equals(d.getString("game"))) return;
-            members(salonId).whereEqualTo("game", GAME_ROULETTE).get().addOnSuccessListener(snap -> {
-                boolean[] taken = new boolean[SEAT_COLORS.length];
-                for (DocumentSnapshot s : snap.getDocuments()) {
-                    Long c = s.getLong("seatColor");
-                    if (c != null && c >= 0 && c < taken.length) taken[c.intValue()] = true;
-                }
-                int free = snap.size() % SEAT_COLORS.length;   // si tout est pris
-                for (int i = 0; i < taken.length; i++) {
-                    if (!taken[i]) { free = i; break; }
-                }
-                m.update("game", GAME_ROULETTE,
-                        "seatSince", now,
-                        "seatColor", free);
-            });
+            m.update("game", GAME_ROULETTE, "seatSince", now);
         });
     }
 

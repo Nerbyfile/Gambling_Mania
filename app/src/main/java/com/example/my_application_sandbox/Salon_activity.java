@@ -45,6 +45,7 @@ public class Salon_activity extends AppCompatActivity {
     private LinearLayout membersRow;
     private ListenerRegistration regMembers;
     private FrameLayout rouletteSeats;
+    private java.util.Map<String, Integer> memberColors = new java.util.HashMap<>();
 
     // Placement des joeurs autour de la table
     private static final float[][] ROULETTE_SEATS = {
@@ -172,6 +173,10 @@ public class Salon_activity extends AppCompatActivity {
         rouletteSeats.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
             if ((r - l) != (or - ol) || (b - t) != (ob - ot)) v.post(this::placeSeats);
         });
+
+        // chat du salon : démarré à l'arrivée, actif jusqu'au départ du salon
+        ChatSession.start(salonId);
+        ChatOverlayView.attach(this, findViewById(R.id.chat_slot), true);
     }
 
     @Override
@@ -195,10 +200,13 @@ public class Salon_activity extends AppCompatActivity {
         if (isFinishing() && salonId != null) {
             SalonRepository.leaveSalon(salonId, Player.current().getId());
         }
+        ChatSession.stop();
+        SalonRepository.leaveSalon(salonId, Player.current().getId());
     }
 
     private void showMembers(List<SalonMember> members) {
         String myId = Player.current().getId();
+        memberColors = SalonRepository.assignColors(members);
 
         // toi en premier, puis par ordre alphabétique
         members.sort((a, b) -> {
@@ -253,7 +261,8 @@ public class Salon_activity extends AppCompatActivity {
         img.setImageResource(Avatar.res(m.getAvatarId()));
 
         boolean me = myId.equals(m.getId());
-        img.setStrokeColor(ColorStateList.valueOf(me ? 0xFFF5D78A : 0xFFC9A227));
+        Integer c = memberColors.get(m.getId());
+        img.setStrokeColor(ColorStateList.valueOf(c != null ? c : 0xFFC9A227));
         img.setStrokeWidth((me ? 3 : 2) * d);
 
         ((TextView) item.findViewById(R.id.txt_member_name)).setText(m.getName());
