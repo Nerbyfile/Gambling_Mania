@@ -1,6 +1,5 @@
 <resources>
-    <string name="app_name">My_Application_Sandbox</string>
+    <string name="app_name">Gambling Mania</string>
     <string name="jeu_un">Roulette</string>
-    <string name="parameter_window">Paramètres</string>
     <string name="salon">Salon</string>
 </resources>

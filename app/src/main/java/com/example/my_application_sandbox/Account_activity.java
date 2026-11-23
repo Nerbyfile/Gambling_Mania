@@ -7,6 +7,12 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+import android.graphics.Rect;
+import android.view.View;
+import android.graphics.Rect;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ScrollView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -31,17 +37,28 @@ public class Account_activity extends AppCompatActivity {
     private ShapeableImageView imgAvatar;
     private int avatarId = 0;   // avatar choisi
 
+    private boolean imeVisible = false;   // clavier affiché ou non
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_account);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+        ScrollView scroll = findViewById(R.id.main);
+
+        ViewCompat.setOnApplyWindowInsetsListener(scroll, (v, insets) -> {
+            Insets bars = insets.getInsets(
+                    WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.ime());
             int padding = (int) (32 * getResources().getDisplayMetrics().density);
-            v.setPadding(systemBars.left + padding, systemBars.top + padding,
-                    systemBars.right + padding, systemBars.bottom + padding);
+            v.setPadding(bars.left + padding, bars.top + padding,
+                    bars.right + padding, bars.bottom + padding);
+            imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime());
             return insets;
+        });
+
+        // à chaque fin de mise en page avec le clavier ouvert, on recadre sur le champ actif
+        scroll.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
+            if (imeVisible) scrollToFocus(scroll);
         });
 
         editName = findViewById(R.id.edit_name);
@@ -49,6 +66,12 @@ public class Account_activity extends AppCompatActivity {
         btnCreate = findViewById(R.id.btn_create);
         imgAvatar = findViewById(R.id.img_avatar);
         imgAvatar.setImageResource(Avatar.res(avatarId));
+
+        View.OnFocusChangeListener refocus = (v, hasFocus) -> {
+            if (hasFocus) scroll.postDelayed(() -> scrollToFocus(scroll), 200);
+        };
+        editName.setOnFocusChangeListener(refocus);
+        editPin.setOnFocusChangeListener(refocus);
 
         //select de la pp
         findViewById(R.id.avatar_zone).setOnClickListener(zone ->
@@ -65,6 +88,26 @@ public class Account_activity extends AppCompatActivity {
             }
             return false;
         });
+    }
+
+    /** Fait défiler pour que le champ actif soit visible au-dessus du clavier. */
+    private void scrollToFocus(ScrollView scroll) {
+        View focus = getCurrentFocus();
+        if (focus == null) return;
+
+        Rect r = new Rect();
+        focus.getDrawingRect(r);
+        scroll.offsetDescendantRectToMyCoords(focus, r);   // position dans la zone du ScrollView
+
+        int margin = (int) (24 * getResources().getDisplayMetrics().density);
+        int visibleTop = scroll.getPaddingTop();
+        int visibleBottom = scroll.getHeight() - scroll.getPaddingBottom();   // au-dessus du clavier
+
+        if (r.bottom + margin > visibleBottom) {
+            scroll.smoothScrollBy(0, r.bottom + margin - visibleBottom);
+        } else if (r.top - margin < visibleTop) {
+            scroll.smoothScrollBy(0, r.top - margin - visibleTop);
+        }
     }
 
     private void createAccount() {

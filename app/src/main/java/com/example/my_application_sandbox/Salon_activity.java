@@ -197,11 +197,12 @@ public class Salon_activity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (isFinishing() && salonId != null) {
-            SalonRepository.leaveSalon(salonId, Player.current().getId());
+        if (salonId != null) {
+            if (isFinishing()) {
+                SalonRepository.leaveSalon(salonId, Player.current().getId());
+            }
+            ChatSession.stop();
         }
-        ChatSession.stop();
-        SalonRepository.leaveSalon(salonId, Player.current().getId());
     }
 
     private void showMembers(List<SalonMember> members) {

@@ -255,6 +255,64 @@
                     app:layout_constraintStart_toStartOf="@id/roulette"
                     app:layout_constraintTop_toBottomOf="@id/roulette" />
 
+
+                <TextView
+                    android:id="@+id/soon_poker"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_bientot"
+                    android:elevation="8dp"
+                    android:fontFamily="sans-serif-black"
+                    android:letterSpacing="0.1"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="6dp"
+                    android:rotation="-25"
+                    android:text="BIENTÔT"
+                    android:textColor="#0A0A0A"
+                    android:textSize="13sp"
+                    app:layout_constraintBottom_toBottomOf="@id/poker"
+                    app:layout_constraintEnd_toEndOf="@id/poker"
+                    app:layout_constraintStart_toStartOf="@id/poker"
+                    app:layout_constraintTop_toTopOf="@id/poker" />
+
+                <TextView
+                    android:id="@+id/soon_bj"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_bientot"
+                    android:elevation="8dp"
+                    android:fontFamily="sans-serif-black"
+                    android:letterSpacing="0.1"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="6dp"
+                    android:rotation="-25"
+                    android:text="BIENTÔT"
+                    android:textColor="#0A0A0A"
+                    android:textSize="13sp"
+                    app:layout_constraintBottom_toBottomOf="@id/blackjack"
+                    app:layout_constraintEnd_toEndOf="@id/blackjack"
+                    app:layout_constraintStart_toStartOf="@id/blackjack"
+                    app:layout_constraintTop_toTopOf="@id/blackjack" />
+
+                <TextView
+                    android:id="@+id/soon_machinesous"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_bientot"
+                    android:elevation="8dp"
+                    android:fontFamily="sans-serif-black"
+                    android:letterSpacing="0.1"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="6dp"
+                    android:rotation="-25"
+                    android:text="BIENTÔT"
+                    android:textColor="#0A0A0A"
+                    android:textSize="13sp"
+                    app:layout_constraintBottom_toBottomOf="@id/slot_machines"
+                    app:layout_constraintEnd_toEndOf="@id/slot_machines"
+                    app:layout_constraintStart_toStartOf="@id/slot_machines"
+                    app:layout_constraintTop_toTopOf="@id/slot_machines" />
+
                 <!-- zone des joueurs assis à la roulette -->
                 <FrameLayout
                     android:id="@+id/roulette_seats"

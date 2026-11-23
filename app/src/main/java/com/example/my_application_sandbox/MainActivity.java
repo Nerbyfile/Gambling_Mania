@@ -87,10 +87,6 @@ public class MainActivity extends AppCompatActivity {
     public void playSolo(View v)  { startActivity(new Intent(this, Salon_activity.class)); }
     public void playMulti(View v) { startActivity(new Intent(this, SalonList_activity.class)); }
 
-    public void comingSoon(View v) {
-        Toast.makeText(this, "Bientôt disponible", Toast.LENGTH_SHORT).show();
-    }
-
     public void showProfile(View v) {
         Player p = Player.current();
         View view = getLayoutInflater().inflate(R.layout.profile_popup, null);
